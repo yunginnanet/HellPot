@@ -3,6 +3,8 @@ Heffalump is an endless honeypot that gives malicious bots nightmares. To use, i
 
 The source of the honeypot data is [Once On a Time](http://www.gutenberg.org/files/27771/27771-h/27771-h.htm), one of A. A. Milne's most beloved and most public domain works.
 
+![Exploding Heffalump](exploding-heffalump.gif)
+
 ## Installation
 First install [Go](http://golang.org).
 
