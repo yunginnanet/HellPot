@@ -37,7 +37,7 @@ func main() {
 		path = "/"
 	}
 
-	http.HandleFunc(path, heff.Honeypot)
+	http.HandleFunc(path, heff.DefaultHoneypot)
 
 	log.Fatal(http.ListenAndServe(addr, nil))
 
