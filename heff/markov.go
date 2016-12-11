@@ -2,7 +2,6 @@ package heff
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"math/rand"
 	"strings"
@@ -52,44 +51,60 @@ func ScanHTML(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	return start, nil, nil
 }
 
-const (
-	nprefix = 2
-	nonword = "\n"
-)
+type tokenPair [2]string
 
-type tokenPair [nprefix]string
+var DefaultMarkovMap = MakeMarkovMap(strings.NewReader(Src))
 
-var markov = make(map[tokenPair][]string)
+type MarkovMap map[tokenPair][]string
 
-func init() {
-	var w1, w2 = nonword, nonword
-	var p tokenPair
-
-	s := bufio.NewScanner(strings.NewReader(Src))
-	s.Split(ScanHTML)
-	for s.Scan() {
-		t := s.Text()
-		p = tokenPair{w1, w2}
-		markov[p] = append(markov[p], t)
-		w1, w2 = w2, t
-	}
-
-	p = tokenPair{w1, w2}
-	markov[p] = append(markov[p], nonword)
+func MakeMarkovMap(r io.Reader) MarkovMap {
+	m := MarkovMap{}
+	m.Fill(r)
+	return m
 }
 
-func Generate(w io.Writer, maxgen int) {
-	var w1, w2 = nonword, nonword
+func (mm MarkovMap) Fill(r io.Reader) {
+	var w1, w2, w3 string
 
-	for i := 0; i < maxgen; i++ {
-		p := tokenPair{w1, w2}
-		suffix := markov[p]
-		r := rand.Intn(len(suffix))
-		t := suffix[r]
-		if t == nonword {
+	s := bufio.NewScanner(r)
+	s.Split(ScanHTML)
+	for s.Scan() {
+		w3 := s.Text()
+		mm.Add(w1, w2, w3)
+		w1, w2 = w2, w3
+	}
+
+	mm.Add(w1, w2, w3)
+}
+
+func (mm MarkovMap) Add(w1, w2, w3 string) {
+	p := tokenPair{w1, w2}
+	mm[p] = append(mm[p], w3)
+}
+
+func (mm MarkovMap) Get(w1, w2 string) string {
+	p := tokenPair{w1, w2}
+	suffix, ok := mm[p]
+	if !ok {
+		return ""
+	}
+
+	r := rand.Intn(len(suffix))
+	return suffix[r]
+}
+
+func (mm MarkovMap) Read(p []byte) (n int, err error) {
+	var w1, w2, w3 string
+
+	for {
+		w3 = mm.Get(w1, w2)
+		if n+len(w3)+1 >= len(p) {
 			break
 		}
-		fmt.Fprint(w, t, "\n")
-		w1, w2 = w2, t
+		n += copy(p[n:], w3)
+		n += copy(p[n:], "\n")
+		w1, w2 = w2, w3
 	}
+
+	return
 }

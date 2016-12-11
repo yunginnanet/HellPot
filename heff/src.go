@@ -1,7 +1,6 @@
 package heff
 
-const Src = `<HTML><BODY>
-<H1 ALIGN="center">
+const Src = `<H1 ALIGN="center">
 ONCE ON A TIME
 </H1>
 
