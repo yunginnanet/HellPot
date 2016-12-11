@@ -12,33 +12,24 @@ import (
 
 const usage = `Usage of heffalump:
 
-heffalump [<network address> [<path>]]
+heffalump [opts]
 
 	heffalump serves an endless HTTP honeypot
 
-	<network address> defaults to ":8080".
-
-	<path> defaults to "/". Paths ending in "/" will match all sub-pathes.
 `
 
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usage)
+		flag.PrintDefaults()
 	}
+
+	addr := flag.String("addr", "127.0.0.1:8080", "Network address to listen on")
+	path := flag.String("path", "/", `Path to serve from. Path ending in / serves sub-paths.`)
 	flag.Parse()
 
-	addr := flag.Arg(0)
-	if addr == "" {
-		addr = ":8080"
-	}
+	http.HandleFunc(*path, heff.DefaultHoneypot)
 
-	path := flag.Arg(1)
-	if path == "" {
-		path = "/"
-	}
-
-	http.HandleFunc(path, heff.DefaultHoneypot)
-
-	log.Fatal(http.ListenAndServe(addr, nil))
+	log.Fatal(http.ListenAndServe(*addr, nil))
 
 }

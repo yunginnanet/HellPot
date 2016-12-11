@@ -6,10 +6,11 @@ The source of the honeypot data is [Once On a Time](http://www.gutenberg.org/fil
 ## Usage
 Usage of heffalump:
 
-heffalump [<network address> [<path>]]
+heffalump [opts]
 
     heffalump serves an endless HTTP honeypot
 
-    <network address> defaults to ":8080".
-
-    <path> defaults to "/". Paths ending in "/" will match all sub-pathes.
+  -addr string
+        Address to serve (default "127.0.0.1:8080")
+  -path string
+        Path to serve from. Path ending in / serves sub-paths. (default "/")
