@@ -15,6 +15,7 @@ GOBIN=$(pwd) GOPATH=$(mktemp -d) go get github.com/carlmjohnson/heffalump
 ```
 
 ## Usage
+```
 Usage of heffalump:
 
 heffalump [opts]
@@ -25,3 +26,4 @@ heffalump [opts]
         Address to serve (default "127.0.0.1:8080")
   -path string
         Path to serve from. Path ending in / serves sub-paths. (default "/")
+```
