@@ -53,16 +53,20 @@ func ScanHTML(data []byte, atEOF bool) (advance int, token []byte, err error) {
 
 type tokenPair [2]string
 
+// DefaultMarkovMap is a Markov chain based on Src.
 var DefaultMarkovMap = MakeMarkovMap(strings.NewReader(Src))
 
+// MarkovMap is a map that acts as a Markov chain generator.
 type MarkovMap map[tokenPair][]string
 
+// MakeMarkovMap makes an empty MakeMarkov and fills it with r.
 func MakeMarkovMap(r io.Reader) MarkovMap {
 	m := MarkovMap{}
 	m.Fill(r)
 	return m
 }
 
+// Fill adds all the tokens in r to a MarkovMap
 func (mm MarkovMap) Fill(r io.Reader) {
 	var w1, w2, w3 string
 
@@ -77,11 +81,13 @@ func (mm MarkovMap) Fill(r io.Reader) {
 	mm.Add(w1, w2, w3)
 }
 
+// Add adds a three token sequence to the map.
 func (mm MarkovMap) Add(w1, w2, w3 string) {
 	p := tokenPair{w1, w2}
 	mm[p] = append(mm[p], w3)
 }
 
+// Get psuedo-randomly chooses a possible suffix to w1 and w2.
 func (mm MarkovMap) Get(w1, w2 string) string {
 	p := tokenPair{w1, w2}
 	suffix, ok := mm[p]
@@ -93,6 +99,7 @@ func (mm MarkovMap) Get(w1, w2 string) string {
 	return suffix[r]
 }
 
+// Read fills p with data from calling Get on the MarkovMap.
 func (mm MarkovMap) Read(p []byte) (n int, err error) {
 	var w1, w2, w3 string
 

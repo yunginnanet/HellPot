@@ -7,8 +7,11 @@ import (
 	"sync"
 )
 
+// DefaultHoneypot is an http.HandlerFunc that serves random HTML from the
+// DefaultMarkovMap, 100KB at a time.
 var DefaultHoneypot = NewHoneypot(DefaultMarkovMap, 100*1<<10)
 
+// NewHoneypot creates an http.HandlerFunc from a MarkovMap
 func NewHoneypot(mm MarkovMap, buffsize int) http.HandlerFunc {
 	var pool sync.Pool
 
@@ -16,9 +19,8 @@ func NewHoneypot(mm MarkovMap, buffsize int) http.HandlerFunc {
 		x := pool.Get()
 		if buf, ok := x.([]byte); ok {
 			return buf
-		} else {
-			return make([]byte, buffsize)
 		}
+		return make([]byte, buffsize)
 	}
 
 	putBuffer := func(buf []byte) {
