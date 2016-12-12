@@ -87,7 +87,7 @@ func (mm MarkovMap) Add(w1, w2, w3 string) {
 	mm[p] = append(mm[p], w3)
 }
 
-// Get psuedo-randomly chooses a possible suffix to w1 and w2.
+// Get pseudo-randomly chooses a possible suffix to w1 and w2.
 func (mm MarkovMap) Get(w1, w2 string) string {
 	p := tokenPair{w1, w2}
 	suffix, ok := mm[p]
