@@ -32,7 +32,7 @@ func NewHoneypot(mm MarkovMap, buffsize int) http.HandlerFunc {
 		buf := getBuffer()
 		defer putBuffer(buf)
 		io.WriteString(w, "<HTML>\n<BODY>\n")
-		n, err := io.CopyBuffer(w, DefaultMarkovMap, buf)
+		n, err := io.CopyBuffer(w, mm, buf)
 		log.Printf("Wrote: %d (%v)", n, err)
 	}
 }
