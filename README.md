@@ -5,6 +5,8 @@ The source of the honeypot data is [Once On a Time](http://www.gutenberg.org/fil
 
 ![Exploding Heffalump](exploding-heffalump.gif)
 
+Live example: <a href="https://heffalump.herokuapp.com" rel="nofollow">Do not follow this link.</a> It will flood your browser's memory and likely cause a crash.
+
 ## Installation
 First install [Go](http://golang.org).
 
