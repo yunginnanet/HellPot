@@ -28,10 +28,14 @@ func main() {
 		port = "8080"
 	}
 
-	path := flag.String("path", "/", `Path to serve from. Path ending in / serves sub-paths.`)
-	flag.Parse()
-
-	http.HandleFunc(*path, heff.DefaultHoneypot)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		log.Printf("serving %v", r)
+		heff.DefaultHoneypot(w, r)
+	})
 
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 
