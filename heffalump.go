@@ -33,7 +33,6 @@ func main() {
 			http.NotFound(w, r)
 			return
 		}
-		log.Printf("serving %v", r)
 		heff.DefaultHoneypot(w, r)
 	})
 

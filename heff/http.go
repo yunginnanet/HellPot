@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 )
 
 // DefaultHoneypot is an http.HandlerFunc that serves random HTML from the
@@ -28,11 +29,16 @@ func NewHoneypot(mm MarkovMap, buffsize int) http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Started writing: %v", r.URL)
+		s := time.Now()
+		log.Printf("Start FOR: %v USER AGENT: %q PATH: %q ",
+			r.Header["X-Forwarded-For"], r.UserAgent(), r.URL)
 		buf := getBuffer()
 		defer putBuffer(buf)
 		io.WriteString(w, "<HTML>\n<BODY>\n")
 		n, err := io.CopyBuffer(w, mm, buf)
-		log.Printf("Wrote: %d (%v)", n, err)
+		log.Printf("Finish FOR: %v USER AGENT: %q PATH: %q "+
+			"BYTES: %d DURATION: %v ERROR: %v",
+			r.Header["X-Forwarded-For"], r.UserAgent(), r.URL,
+			n, time.Since(s), err)
 	}
 }
