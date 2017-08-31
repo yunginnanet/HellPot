@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"time"
 
 	"github.com/carlmjohnson/heffalump/heff"
 )
@@ -28,6 +31,10 @@ func main() {
 		port = "8080"
 	}
 
+	// subscribe to SIGINT signals
+	stopChan := make(chan os.Signal)
+	signal.Notify(stopChan, os.Interrupt)
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
@@ -36,6 +43,22 @@ func main() {
 		heff.DefaultHoneypot(w, r)
 	})
 
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	srv := &http.Server{Addr: ":" + port, Handler: http.DefaultServeMux}
 
+	go func() {
+		// service connections
+		if err := srv.ListenAndServe(); err != nil {
+			log.Printf("listen: %s\n", err)
+		}
+	}()
+
+	<-stopChan // wait for SIGINT
+	log.Println("Shutting down server...")
+
+	// shut down gracefully, but wait no longer than 5 seconds before halting
+	ctx, c := context.WithTimeout(context.Background(), 5*time.Second)
+	defer c()
+	srv.Shutdown(ctx)
+
+	log.Println("Server gracefully stopped")
 }
