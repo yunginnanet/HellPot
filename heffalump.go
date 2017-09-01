@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/carlmjohnson/heffalump/heff"
@@ -33,7 +34,7 @@ func main() {
 
 	// subscribe to SIGINT signals
 	stopChan := make(chan os.Signal)
-	signal.Notify(stopChan, os.Interrupt)
+	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
