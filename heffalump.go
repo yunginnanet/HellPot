@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -22,6 +23,8 @@ heffalump [opts]
 
 `
 
+const robotsTxt = "User-agent: *\r\nDisallow: /\r\n"
+
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usage)
@@ -33,7 +36,7 @@ func main() {
 	}
 
 	// subscribe to SIGINT signals
-	stopChan := make(chan os.Signal)
+	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -44,13 +47,18 @@ func main() {
 		heff.DefaultHoneypot(w, r)
 	})
 
+	http.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
+		if _, err := io.WriteString(w, robotsTxt); err != nil {
+			log.Printf("error serving robots.txt: %v", err)
+		}
+	})
+
 	srv := &http.Server{Addr: ":" + port, Handler: http.DefaultServeMux}
 
 	go func() {
 		// service connections
-		if err := srv.ListenAndServe(); err != nil {
-			log.Printf("listen: %s\n", err)
-		}
+		err := srv.ListenAndServe()
+		log.Printf("Finished listening: %v\n", err)
 	}()
 
 	<-stopChan // wait for SIGINT
