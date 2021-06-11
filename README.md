@@ -1,31 +1,34 @@
-# Heffalump [![GoDoc](https://godoc.org/github.com/carlmjohnson/heffalump?status.svg)](https://godoc.org/github.com/carlmjohnson/heffalump) [![Go Report Card](https://goreportcard.com/badge/github.com/carlmjohnson/heffalump)](https://goreportcard.com/report/github.com/carlmjohnson/heffalump)
-Heffalump is an endless honeypot that gives malicious bots nightmares. To use, in your robots.txt tell robots not to go to a certain URL, which heffalump is reverse proxying. Any web agent that does go to the URL will receive an endless stream of random data, which will overflow its memory and/or storage if it doesn't have a max buffer size set or at the very least severely waste its time.
+# HellPot   
+[![GoDoc](https://godoc.org/github.com/yunginnanet/?status.svg)](https://godoc.org/github.com/yunginnanet/HellPot) [![Go Report Card](https://goreportcard.com/badge/github.com/yunginnanet/HellPot)](https://goreportcard.com/report/github.com/yunginnanet/HellPot)
+  
+HellPot is an endless honeypot that gives sends bots to hell. Based on [Heffalump](https://github.com/carlmjohnson/heffalump).   
+  
+  It finishes the work of Heffalump with a few improvements and the addition of a [toml configuration file](https://github.com/spf13/viper) and [JSON logging](https://github.com/rs/zerolog). It is built off of [CokePlate](https://git.tcp.direct/kayos/CokePlate).
+    
 
-The source of the honeypot data is [Once On a Time](http://www.gutenberg.org/files/27771/27771-h/27771-h.htm), one of A. A. Milne's most beloved and most public domain works.
+The source of the honeypot data is [The Birth of Tragedy (Hellenism and Pessimism)](https://www.gutenberg.org/files/51356/51356-h/51356-h.htm) by Friedrich Nietzsche
 
-![Exploding Heffalump](exploding-heffalump.gif)
+![Exploding Heffalump](hellgif.gif)
 
-Live example: <a href="https://heffalump.herokuapp.com" rel="nofollow">Do not follow this link.</a> It will flood your browser's memory and likely cause a crash.
+Live example: <a href="https://vx-underground.org/wp-login.php" rel="nofollow">Do not follow this link.</a> It will flood your browser's memory and likely cause a crash.
 
-## Installation
-First install [Go](http://golang.org).
-
-If you just want to install the binary to your current directory and don't care about the source code, run
-
-```shell
-GOBIN=$(pwd) GOPATH=$(mktemp -d) go get github.com/carlmjohnson/heffalump
+## Example Web Server Config (nginx)  
+    
+```          
+		location '/robots.txt' {
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_pass http://127.0.0.1:8080$request_uri;
+        }
+        location '/wp-login.php' {
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_pass http://127.0.0.1:8080$request_uri;
+        }
 ```
 
-## Usage
-```
-Usage of heffalump:
 
-heffalump [opts]
-
-    heffalump serves an endless HTTP honeypot
-
-  -addr string
-        Address to serve (default "127.0.0.1:8080")
-  -path string
-        Path to serve from. Path ending in / serves sub-paths. (default "/")
-```
+## Example Program Config (toml) 
+  
+  If the configuration  file is missing, the default settings will automatically drop itself in the current working directory as `config.toml`.  
+    

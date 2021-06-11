@@ -1,6 +1,7 @@
 package main
 
 import (
+	"HellPot/src/config"
 	"context"
 	"io"
 	"net/http"
@@ -10,34 +11,26 @@ import (
 	"time"
 )
 
-const robotsTxt = "User-agent: *\r\nDisallow: "
+const robotsTxt = "User-agent: *\r\n"
 
 func startPot() {
-	addr := os.Getenv("HONEYADDR")
-	if addr == "" {
-		addr = "127.0.0.1"
-	}
-
-	port := os.Getenv("HONEYPORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	path := os.Getenv("HONEYPATH")
-	if path == "" {
-		path = "/wp-login.php"
-	}
+	var paths string
+	addr := config.BindAddr
+	port := config.BindPort
 
 	// subscribe to SIGINT signals
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
 
-	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-		DefaultHoneypot(w, r)
-	})
+	for _, p := range config.Paths {
+		http.HandleFunc(p, func(w http.ResponseWriter, r *http.Request) {
+			DefaultHoneypot(w, r)
+		})
+		paths = paths + "Disallow: " + p + "\r\n"
+	}
 
 	http.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
-		if _, err := io.WriteString(w, robotsTxt+path+"\r\n"); err != nil {
+		if _, err := io.WriteString(w, robotsTxt+paths+"\r\n"); err != nil {
 			log.Error().Err(err).Msg("SERVE_ROBOTS_ERROR")
 		}
 	})
@@ -45,6 +38,8 @@ func startPot() {
 	srv := &http.Server{Addr: addr + ":" + port, Handler: http.DefaultServeMux}
 
 	go func() {
+		log.Info().Str("bind_addr", addr).Str("bind_port", port).
+			Msg("Listening and serving HTTP...")
 		// service connections
 		err := srv.ListenAndServe()
 		log.Warn().Err(err).Msg("HTTP_STOP")

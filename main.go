@@ -18,10 +18,6 @@ import (
 
 var log zerolog.Logger
 
-//   TODO:
-//// optional bitcask database initialization
-//// fix default config file writing
-
 func init() {
 	// configuration engine
 	config.Blueprint()

@@ -47,14 +47,15 @@ var appLabel string = Title + " " + Version
 
 */
 var (
-	Debug     bool = false
-	LogDir    string
-	Banner    string
-	DataDir   string
+	Debug       bool = false
+	LogDir      string
+	Banner      string
+	DataDir     string
 	Databases []string
 	//Color bool
-	//BindAddr string
-	//BindPort int
+	BindAddr    string
+	BindPort    string
+	Paths     []string
 )
 
 // -----------------------------------------------------------------
@@ -202,25 +203,35 @@ func Blueprint() {
 		"log_directory": "./.logs/",
 	}
 
+	defHTTP := map[string]interface{}{
+		"bind_addr": "127.0.0.1",
+		"bind_port": "8080",
+		"paths": []string{
+			"wp-login.php",
+			"wp-login",
+		},
+	}
+
+/*
 	defData := map[string]interface{}{
 		"directory": "./.data/",
 	}
 
-	/*
-		// here we are defining a generic category as an example
-		defCategory := map[string]interface{}{
-			"shouldistay": true,
-			"shouldigo":   false,
-			"optics":      "ironsights",
-			"fucksgiven":  0,
-			// e.g: /home/fuckhole/.jonesapp/config.toml
-			//"admins": []string{"Satan", "Yahweh", "FuckholeJones"},
-		}
-	*/
+	// here we are defining a generic category as an example
+	defCategory := map[string]interface{}{
+		"shouldistay": true,
+		"shouldigo":   false,
+		"optics":      "ironsights",
+		"fucksgiven":  0,
+		"admins": []string{"Satan", "Yahweh", "FuckholeJones"},
+	}
+*/
 
 	Config.SetDefault("name", defName)
 	Config.SetDefault("logger", defLogger)
-	Config.SetDefault("database", defData)
+	Config.SetDefault("http", defHTTP)
+	//Config.SetDefault("database", defData)
+	//Config.SetDefault("category", defCategory)
 
 	Config.SetConfigType("toml")
 	Config.SetConfigName("config")
@@ -272,7 +283,11 @@ func associate() {
 	LogDir = Config.GetString("logger.log_directory")
 
 	// bitcask database parameters (casket)
-	DataDir = Config.GetString("database.directory")
-	Databases = Config.GetStringSlice("database.databases")
+	//DataDir = Config.GetString("database.directory")
+	//Databases = Config.GetStringSlice("database.databases")
 
+	// HellPot specific directives
+        BindAddr = Config.GetString("http.bind_addr")
+        BindPort = Config.GetString("http.bind_port")
+        Paths    = Config.GetStringSlice("http.paths")
 }
