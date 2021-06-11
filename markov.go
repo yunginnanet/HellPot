@@ -1,4 +1,4 @@
-package heff
+package main
 
 import (
 	"bufio"

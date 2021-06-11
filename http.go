@@ -1,8 +1,7 @@
-package heff
+package main
 
 import (
 	"io"
-	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -30,15 +29,21 @@ func NewHoneypot(mm MarkovMap, buffsize int) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		s := time.Now()
-		log.Printf("Start FOR: %v USER AGENT: %q PATH: %q ",
-			r.Header["X-Forwarded-For"], r.UserAgent(), r.URL)
+		log.Info().
+			Str("UserAgent", r.UserAgent()).
+			Interface("URL", r.URL).
+			Strs("REMOTE_ADDR", r.Header.Values("X-Real-IP")).
+			Msg("SERVE")
 		buf := getBuffer()
 		defer putBuffer(buf)
 		io.WriteString(w, "<HTML>\n<BODY>\n")
 		n, err := io.CopyBuffer(w, mm, buf)
-		log.Printf("Finish FOR: %v USER AGENT: %q PATH: %q "+
-			"BYTES: %d DURATION: %v ERROR: %v",
-			r.Header["X-Forwarded-For"], r.UserAgent(), r.URL,
-			n, time.Since(s), err)
+		log.Info().
+			Str("UserAgent", r.UserAgent()).
+			Interface("URL", r.URL).
+			Strs("REMOTE_ADDR", r.Header.Values("X-Real-IP")).
+			Int64("BYTES", n).
+			Dur("DURATION", time.Since(s)).
+			Err(err).Msg("FINISH")
 	}
 }

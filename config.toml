@@ -1,0 +1,5 @@
+title = "HellPot"
+
+[logger]
+debug = false
+log_directory = "./logs/" 

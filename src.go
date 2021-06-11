@@ -1,4 +1,4 @@
-package heff
+package main
 
 // Src is A. A. Milne's "Once on a Time" as transcribed by Project Gutenberg.
 const Src = `<H1 ALIGN="center">
