@@ -3,7 +3,7 @@ package main
 import (
 	"HellPot/src/config"
 	"context"
-	"io"
+	"github.com/gorilla/mux"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,7 +14,6 @@ import (
 const robotsTxt = "User-agent: *\r\n"
 
 func startPot() {
-	var paths string
 	addr := config.BindAddr
 	port := config.BindPort
 
@@ -22,20 +21,11 @@ func startPot() {
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
 
-	for _, p := range config.Paths {
-		http.HandleFunc(p, func(w http.ResponseWriter, r *http.Request) {
-			DefaultHoneypot(w, r)
-		})
-		paths = paths + "Disallow: " + p + "\r\n"
-	}
+	r := mux.NewRouter()
 
-	http.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
-		if _, err := io.WriteString(w, robotsTxt+paths+"\r\n"); err != nil {
-			log.Error().Err(err).Msg("SERVE_ROBOTS_ERROR")
-		}
-	})
+	r.HandleFunc("/{path}", DefaultHoneypot)
 
-	srv := &http.Server{Addr: addr + ":" + port, Handler: http.DefaultServeMux}
+	srv := &http.Server{Addr: addr + ":" + port, Handler: r}
 
 	go func() {
 		log.Info().Str("bind_addr", addr).Str("bind_port", port).

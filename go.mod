@@ -3,6 +3,7 @@ module HellPot
 go 1.16
 
 require (
+	github.com/gorilla/mux v1.8.0
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/rs/zerolog v1.22.0
 	github.com/spf13/afero v1.2.2 // indirect
