@@ -1,4 +1,4 @@
-module HellPot
+module github.com/yunginnanet/HellPot
 
 go 1.16
 

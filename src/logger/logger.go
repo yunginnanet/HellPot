@@ -4,7 +4,7 @@ import (
 	//"fmt"
 	"github.com/rs/zerolog"
 	//"github.com/rs/zerolog/log"
-	"HellPot/src/config"
+	"github.com/yunginnanet/HellPot/src/config"
 	"os"
 	"time"
 )

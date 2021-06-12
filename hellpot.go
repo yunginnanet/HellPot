@@ -1,9 +1,9 @@
 package main
 
 import (
-	"HellPot/src/config"
 	"context"
 	"github.com/gorilla/mux"
+	"github.com/yunginnanet/HellPot/src/config"
 	"net/http"
 	"os"
 	"os/signal"

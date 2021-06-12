@@ -2,16 +2,16 @@ package main
 
 import (
 	// zerolog json logging and console pretty printing
-	"HellPot/src/logger"
 	"github.com/rs/zerolog"
+	"github.com/yunginnanet/HellPot/src/logger"
 
 	// viper configuration engine for a toml config file
-	"HellPot/src/config"
+	"github.com/yunginnanet/HellPot/src/config"
 
 	// ascii banners and other aesthetic shit
-	"HellPot/src/decorate"
+	"github.com/yunginnanet/HellPot/src/decorate"
 	// bitcask embedded key/value database
-	//"HellPot/src/casket"
+	//"github.com/yunginnanet/HellPot/src/casket"
 )
 
 var log zerolog.Logger
