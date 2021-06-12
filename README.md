@@ -1,7 +1,7 @@
 # HellPot   
 [![GoDoc](https://godoc.org/github.com/yunginnanet/?status.svg)](https://godoc.org/github.com/yunginnanet/HellPot) [![Go Report Card](https://goreportcard.com/badge/github.com/yunginnanet/HellPot)](https://goreportcard.com/report/github.com/yunginnanet/HellPot)
   
-HellPot is an endless honeypot that gives sends bots to hell. Based on [Heffalump](https://github.com/carlmjohnson/heffalump).   
+HellPot is an endless honeypot that sends bots to hell. Based on [Heffalump](https://github.com/carlmjohnson/heffalump).   
   
   It finishes the work of Heffalump with a few improvements and the addition of a [toml configuration file](https://github.com/spf13/viper) and [JSON logging](https://github.com/rs/zerolog). It is built off of [CokePlate](https://git.tcp.direct/kayos/CokePlate).
     
