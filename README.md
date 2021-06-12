@@ -15,16 +15,17 @@ Live example: <a href="https://vx-underground.org/wp-login.php" rel="nofollow">D
 ## Example Web Server Config (nginx)  
     
 ```          
-		location '/robots.txt' {
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_pass http://127.0.0.1:8080$request_uri;
-        }
-        location '/wp-login.php' {
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_pass http://127.0.0.1:8080$request_uri;
-        }
+location '/robots.txt' {
+	proxy_set_header Host $host;
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_pass http://127.0.0.1:8080$request_uri;
+}  
+
+location '/wp-login.php' {
+	proxy_set_header Host $host;
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_pass http://127.0.0.1:8080$request_uri;
+}
 ```
 
 
