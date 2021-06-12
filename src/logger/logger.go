@@ -26,4 +26,3 @@ func LogInit() {
 	multi := zerolog.MultiLevelWriter(zerolog.ConsoleWriter{Out: os.Stderr}, logFile)
 	GlobalLogger = zerolog.New(multi).With().Timestamp().Logger()
 }
-

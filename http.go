@@ -39,6 +39,12 @@ func NewHoneypot(mm MarkovMap, buffsize int) http.HandlerFunc {
 				paths = paths + "Disallow: " + p + "\r\n"
 			}
 
+			log.Debug().
+				Str("UserAgent", r.UserAgent()).
+				Strs("REMOTE_ADDR", r.Header.Values("X-Real-IP")).
+				Strs("PATHS", config.Paths).
+				Msg("SERVE_ROBOTS")
+
 			if _, err := io.WriteString(w, robotsTxt+paths+"\r\n"); err != nil {
 				log.Error().Err(err).Msg("SERVE_ROBOTS_ERROR")
 			}
@@ -69,13 +75,13 @@ func NewHoneypot(mm MarkovMap, buffsize int) http.HandlerFunc {
 		buf := getBuffer()
 		defer putBuffer(buf)
 		io.WriteString(w, "<HTML>\n<BODY>\n")
-		n, err := io.CopyBuffer(w, mm, buf)
+		n, _ := io.CopyBuffer(w, mm, buf)
 		log.Info().
 			Str("UserAgent", r.UserAgent()).
 			Interface("URL", r.URL.RequestURI()).
 			Strs("REMOTE_ADDR", r.Header.Values("X-Real-IP")).
 			Int64("BYTES", n).
 			Dur("DURATION", time.Since(s)).
-			Err(err).Msg("FINISH")
+			Msg("FINISH")
 	}
 }

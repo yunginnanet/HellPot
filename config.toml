@@ -1,7 +1,7 @@
 title = "HellPot"
 
 [logger]
-debug = false
+debug = true
 log_directory = "./logs/" 
 
 [http]

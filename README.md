@@ -32,3 +32,21 @@ Live example: <a href="https://vx-underground.org/wp-login.php" rel="nofollow">D
   
   If the configuration  file is missing, the default settings will automatically drop itself in the current working directory as `config.toml`.  
     
+```  
+title = "HellPot"
+
+[logger]
+debug = false
+log_directory = "./logs/"
+
+[http]
+bind_addr = "127.0.0.1"
+bind_port = "8080"
+# paths to be added to robots.txt that we will respond to
+paths = [
+        "wp-login.php",
+        "wp-login",
+]
+```
+  
+  

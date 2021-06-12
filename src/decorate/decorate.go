@@ -12,13 +12,13 @@ const banner = "ChtbOTc7NDBtIBtbOTc7NDNt4paEG1szMzs0MG3ilojilpIbWzk3OzQwbSAbWzMz
 
 /*Banner (print banner)
 
-   load the base64 data which contains the banner
-   then after decoding the banner we will iterate through the resulting string line by line
+  load the base64 data which contains the banner
+  then after decoding the banner we will iterate through the resulting string line by line
 
-   we do this so that in the future we can add effects like a gradient to the banner if desired
+  we do this so that in the future we can add effects like a gradient to the banner if desired
 
-   if we didn't want to worry about that we could nix the strings and bufio imports
-   and just fmt.Println(dec) to print the banner without additional styling
+  if we didn't want to worry about that we could nix the strings and bufio imports
+  and just fmt.Println(dec) to print the banner without additional styling
 */
 func Banner() {
 	if len(banner) < 1 {

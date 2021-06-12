@@ -10,10 +10,8 @@ import (
 
 	// ascii banners and other aesthetic shit
 	"HellPot/src/decorate"
-
 	// bitcask embedded key/value database
 	//"HellPot/src/casket"
-
 )
 
 var log zerolog.Logger
