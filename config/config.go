@@ -16,6 +16,8 @@ const (
 	Title   = "HellPot"
 )
 
+var BannerOnly = false
+
 // "http"
 var (
 	// BindAddr is defined via our toml configuration file. It is the address that HellPot listens on.
@@ -33,7 +35,7 @@ var (
 // "performance"
 var (
 	RestrictConcurrency bool
-	MaxWorkers int
+	MaxWorkers          int
 )
 
 // "diception"
@@ -168,7 +170,7 @@ func setDefaults() {
 	}
 	Opt["performance"] = map[string]interface{}{
 		"restrict_concurrency": false,
-		"max_workers": 256,
+		"max_workers":          256,
 	}
 	Opt["diception"] = map[string]interface{}{
 		"server_name": "nginx",
@@ -217,6 +219,8 @@ func argParse() {
 			os.Exit(0)
 		case "--config":
 			fallthrough
+		case "--banner":
+			BannerOnly = true
 		case "-c":
 			if len(os.Args) <= i-1 {
 				panic("syntax error! expected file after -c")

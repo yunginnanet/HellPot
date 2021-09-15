@@ -16,6 +16,10 @@ var log zerolog.Logger
 
 func init() {
 	config.Init()
+	if config.BannerOnly {
+		extra.PrintBanner()
+		os.Exit(0)
+	}
 	log = config.StartLogger()
 	extra.Banner()
 	if config.Debug {
