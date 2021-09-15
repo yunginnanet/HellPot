@@ -1,5 +1,12 @@
 # HellPot   
 [![GoDoc](https://godoc.org/github.com/yunginnanet/HellPot?status.svg)](https://godoc.org/github.com/yunginnanet/HellPot) [![Go Report Card](https://goreportcard.com/badge/github.com/yunginnanet/HellPot)](https://goreportcard.com/report/github.com/yunginnanet/HellPot)
+
+
+**CURRENTLY BROKEN FOR VERSIONS OF GO OVER 1.16.5**
+
+**SEE THIS ISSUE:**  https://github.com/yunginnanet/HellPot/issues/2
+  
+---  
   
 HellPot is an endless honeypot that sends bots to hell. Based on [Heffalump](https://github.com/carlmjohnson/heffalump).   
   
