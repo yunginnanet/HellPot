@@ -49,7 +49,10 @@ func (h *Heffalump) putBuffer(buf []byte) {
 
 // WriteHell writes markov chain heffalump hell to the provided io.Writer
 // https://github.com/carlmjohnson/heffalump
-func (h *Heffalump) WriteHell(bw *bufio.Writer) int64 {
+func (h *Heffalump) WriteHell(bw *bufio.Writer) (int64, error) {
+	var n int64
+	var err error
+
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error().Interface("caller", r).Msg("panic recovered!")
@@ -59,15 +62,13 @@ func (h *Heffalump) WriteHell(bw *bufio.Writer) int64 {
 	buf := h.getBuffer()
 	defer h.putBuffer(buf)
 
-	if _, err := io.WriteString(bw, "<HTML>\n<BODY>\n"); err != nil {
-		log.Debug().Caller().Err(err).Msg("WriteString_fail")
+	if _, err = io.WriteString(bw, "<HTML>\n<BODY>\n"); err != nil {
+		return n, err
 	}
 
-	var n int64
-	var err error
 	if n, err = io.CopyBuffer(bw, h.mm, buf); err != nil {
-		log.Debug().Caller().Err(err).Msg("CopyBuffer_fail")
+		return n, nil
 	}
 
-	return n
+	return n, nil
 }

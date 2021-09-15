@@ -35,20 +35,28 @@ func hellPot(ctx *fasthttp.RequestCtx) {
 	slog.Info().Msg("NEW")
 
 	s := time.Now()
-
 	var n int64
 
 	ctx.SetBodyStreamWriter(func(bw *bufio.Writer) {
-		n = heffalump.DefaultHeffalump.WriteHell(bw)
+		var err error
+		var wn int64
+
+		for {
+			wn, err = heffalump.DefaultHeffalump.WriteHell(bw)
+			n += wn
+			if err != nil {
+				slog.Debug().Err(err).Msg("END_ON_ERR")
+				break
+			}
+		}
+
+		slog.Info().
+			Int64("BYTES", n).
+			Dur("DURATION", time.Since(s)).
+			Msg("FINISH")
 	})
 
-
-	slog.Info().
-		Int64("BYTES", n).
-		Dur("DURATION", time.Since(s)).
-		Msg("FINISH")
 }
-
 
 func listenOnUnixSocket(addr string, r *router.Router) error {
 	var err error
@@ -82,13 +90,13 @@ func getSrv(r *router.Router) fasthttp.Server {
 			from fasthttp docs: "By default request read timeout is unlimited."
 			My thinking here is avoiding some sort of weird oversized GET query just in case.
 		*/
-		ReadTimeout: 5 * time.Second,
+		ReadTimeout:        5 * time.Second,
 		MaxRequestBodySize: 1 * 1024 * 1024,
 
 		// Help curb abuse of HellPot (we've always needed this badly)
-		MaxConnsPerIP: 10,
+		MaxConnsPerIP:      10,
 		MaxRequestsPerConn: 2,
-		Concurrency: config.MaxWorkers,
+		Concurrency:        config.MaxWorkers,
 
 		// only accept GET requests
 		GetOnly: true,
@@ -98,12 +106,8 @@ func getSrv(r *router.Router) fasthttp.Server {
 
 		CloseOnShutdown: true,
 
-
-
 		// No need to keepalive, our response is a sort of keep-alive ;)
 		DisableKeepalive: true,
-
-
 
 		Handler: r.Handler,
 	}
@@ -121,7 +125,7 @@ func Serve() error {
 	}
 
 	srv := getSrv(r)
-	
+
 	if !config.UseUnixSocket {
 		log.Info().Str("caller", l).Msg("Listening and serving HTTP...")
 		return srv.ListenAndServe(l)
