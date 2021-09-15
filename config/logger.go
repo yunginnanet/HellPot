@@ -39,7 +39,8 @@ func StartLogger() zerolog.Logger {
 	}
 
 	multi := zerolog.MultiLevelWriter(zerolog.ConsoleWriter{NoColor: NoColor, Out: os.Stdout}, logFile)
-	return zerolog.New(multi).With().Timestamp().Logger()
+	logger = zerolog.New(multi).With().Timestamp().Logger()
+	return logger
 }
 
 // GetLogger retrieves our global logger object

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"syscall"
@@ -24,40 +25,30 @@ func getRealRemote(ctx *fasthttp.RequestCtx) string {
 	return ctx.RemoteIP().String()
 }
 
-func scopeCheck(ctx *fasthttp.RequestCtx) {
-	var inscope = false
-	reqpath := ctx.QueryArgs().Peek("path")
-
+func hellPot(ctx *fasthttp.RequestCtx) {
 	remoteAddr := getRealRemote(ctx)
-
 	slog := log.With().
-		Str("UserAgent", string(ctx.UserAgent())).
+		Str("USERAGENT", string(ctx.UserAgent())).
 		Str("REMOTE_ADDR", remoteAddr).
 		Interface("URL", string(ctx.RequestURI())).Logger()
 
-	for _, p := range config.Paths {
-		if string(reqpath) == p {
-			inscope = true
-			break
-		}
-	}
-
-	if !inscope {
-		slog.Warn().Msg("Request outside of configured scope!")
-		ctx.Error("", 404)
-		return
-	}
+	slog.Info().Msg("NEW")
 
 	s := time.Now()
 
-	n := heffalump.DefaultHeffalump.WriteHell(ctx.Response.BodyWriter())
+	var n int64
+
+	ctx.SetBodyStreamWriter(func(bw *bufio.Writer) {
+		n = heffalump.DefaultHeffalump.WriteHell(bw)
+	})
+
 
 	slog.Info().
 		Int64("BYTES", n).
 		Dur("DURATION", time.Since(s)).
 		Msg("FINISH")
-
 }
+
 
 func listenOnUnixSocket(addr string, r *router.Router) error {
 	var err error
@@ -77,42 +68,32 @@ func listenOnUnixSocket(addr string, r *router.Router) error {
 	return err
 }
 
-// Serve starts our HTTP server and request router
-func Serve() error {
-	log = config.GetLogger()
-
-	l := fmt.Sprintf("%s:%s", config.BindAddr, config.BindPort)
-
-	r := router.New()
-	r.GET("/robots.txt", robotsTXT)
-	r.GET("/{path}", scopeCheck)
-
+func getSrv(r *router.Router) fasthttp.Server {
 	if !config.RestrictConcurrency {
 		config.MaxWorkers = fasthttp.DefaultConcurrency
 	}
 
-	srv := fasthttp.Server{
+	return fasthttp.Server{
 		// User defined server name
 		// Likely not useful if behind a reverse proxy without additional configuration of the proxy server.
 		Name: config.FakeServerName,
 
 		/*
-		from fasthttp docs: "By default request read timeout is unlimited."
-		My thinking here is avoiding some sort of weird oversized GET query just in case.
+			from fasthttp docs: "By default request read timeout is unlimited."
+			My thinking here is avoiding some sort of weird oversized GET query just in case.
 		*/
 		ReadTimeout: 5 * time.Second,
 		MaxRequestBodySize: 1 * 1024 * 1024,
 
 		// Help curb abuse of HellPot (we've always needed this badly)
-		MaxConnsPerIP: 1,
+		MaxConnsPerIP: 10,
 		MaxRequestsPerConn: 2,
 		Concurrency: config.MaxWorkers,
 
 		// only accept GET requests
 		GetOnly: true,
 
-		// we don't care if a request ends up being handled by a different handler
-		// it shouldn't for now, but this may prevent future bugs
+		// we don't care if a request ends up being handled by a different handler (in fact it probably will)
 		KeepHijackedConns: true,
 
 		CloseOnShutdown: true,
@@ -126,7 +107,21 @@ func Serve() error {
 
 		Handler: r.Handler,
 	}
+}
 
+// Serve starts our HTTP server and request router
+func Serve() error {
+	log = config.GetLogger()
+	l := fmt.Sprintf("%s:%s", config.BindAddr, config.BindPort)
+
+	r := router.New()
+	r.GET("/robots.txt", robotsTXT)
+	for _, p := range config.Paths {
+		r.GET(fmt.Sprintf("/%s", p), hellPot)
+	}
+
+	srv := getSrv(r)
+	
 	if !config.UseUnixSocket {
 		log.Info().Str("caller", l).Msg("Listening and serving HTTP...")
 		return srv.ListenAndServe(l)
