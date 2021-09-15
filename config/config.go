@@ -83,8 +83,6 @@ func Init() {
 		snek.AddConfigPath(loc)
 	}
 
-	Filename = snek.ConfigFileUsed()
-
 	if err = snek.MergeInConfig(); err != nil {
 		if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
 			if err = os.Mkdir(prefConfigLocation, 0755); err != nil {
@@ -100,6 +98,10 @@ func Init() {
 		}
 
 		Filename = newconfig
+	}
+
+	if len(Filename) < 1 {
+		Filename = snek.ConfigFileUsed()
 	}
 
 	associate()
@@ -132,6 +134,7 @@ func acquireClue() {
 	configLocations = append(configLocations, "/etc/"+title+"/")
 	configLocations = append(configLocations, "./")
 	configLocations = append(configLocations, "../")
+	configLocations = append(configLocations, "../../")
 }
 
 func loadCustomConfig(path string) {
