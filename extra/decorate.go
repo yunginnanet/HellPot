@@ -1,8 +1,8 @@
 package extra
 
 import (
-	"runtime"
 	"github.com/yunginnanet/HellPot/config"
+	"runtime"
 )
 
 // Banner prints out our banner (using spooky magic)

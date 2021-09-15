@@ -10,9 +10,9 @@ import (
 
 var (
 	CurrentLogFile string
-	logFile *os.File
-	logDir string
-	logger zerolog.Logger
+	logFile        *os.File
+	logDir         string
+	logger         zerolog.Logger
 )
 
 // StartLogger instantiates an instance of our zerolog loggger so we can hook it in our main package.

@@ -1,7 +1,7 @@
 /*
 Package heffalump attempts to encapsulate the original work by carlmjohnson on heffalump
 https://github.com/carlmjohnson/heffalump
- */
+*/
 package heffalump
 
 import (
