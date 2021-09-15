@@ -38,7 +38,7 @@ var (
 	MaxWorkers          int
 )
 
-// "diception"
+// "deception"
 var (
 	// FakeServerName is our configured value for the "Server: " response header when serving HTTP clients
 	FakeServerName string
@@ -143,7 +143,7 @@ func Init() {
 
 func setDefaults() {
 	var (
-		configSections = []string{"logger", "http", "performance", "diception"}
+		configSections = []string{"logger", "http", "performance", "deception"}
 		deflogdir      = home + "/.config/" + Title + "/logs/"
 		defNoColor     = false
 	)
@@ -173,7 +173,7 @@ func setDefaults() {
 		"restrict_concurrency": false,
 		"max_workers":          256,
 	}
-	Opt["diception"] = map[string]interface{}{
+	Opt["deception"] = map[string]interface{}{
 		"server_name": "nginx",
 	}
 
@@ -256,7 +256,7 @@ func associate() {
 	BindPort = snek.GetString("http.bind_port")
 	Paths = snek.GetStringSlice("http.paths")
 	UseUnixSocket = snek.GetBool("http.use_unix_socket")
-	FakeServerName = snek.GetString("diception.server_name")
+	FakeServerName = snek.GetString("deception.server_name")
 	RestrictConcurrency = snek.GetBool("performance.restrict_concurrency")
 	MaxWorkers = snek.GetInt("performance.max_workers")
 	NoColor = snek.GetBool("logger.nocolor")

@@ -1,5 +1,8 @@
-# HellPot   
+# HellPot
+   
 [![GoDoc](https://godoc.org/github.com/yunginnanet/HellPot?status.svg)](https://godoc.org/github.com/yunginnanet/HellPot) [![Go Report Card](https://goreportcard.com/badge/github.com/yunginnanet/HellPot)](https://goreportcard.com/report/github.com/yunginnanet/HellPot)
+  
+### New (v0.3) fasthttp version roughly [~75%](https://github.com/yunginnanet/HellPot/issues/2) faster!
   
 HellPot is an endless honeypot that sends bots to hell. Based on [Heffalump](https://github.com/carlmjohnson/heffalump).   
   
@@ -34,15 +37,15 @@ location '/wp-login.php' {
   If the configuration  file is missing, the default settings will automatically drop itself in the current working directory as `config.toml`.  
     
 ```  
-[diception]
-  server_name = "nginx"
-
 [http]
+  # TCP Listener (default)
   bind_addr = "127.0.0.1"
   bind_port = "8080"
   paths = ["wp-login.php","wp-login"]
-  unix_socket = "/var/run/hellpot"
+
+  # Unix Socket Listener (will override default)
   use_unix_socket = false
+  unix_socket = "/var/run/hellpot"
 
 [logger]
   debug = true
@@ -54,6 +57,10 @@ location '/wp-login.php' {
   # max_workers is only valid if restrict_concurrency is true
   restrict_concurrency = false
   max_workers = 256
+  
+[deception]
+  # Used as "Server: " header (if not proxied)
+  server_name = "nginx"
 
 ```
   
