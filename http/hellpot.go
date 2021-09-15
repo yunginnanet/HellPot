@@ -33,16 +33,16 @@ func listenOnUnixSocket(addr string, srv *http.Server) error {
 func listen() {
 	addr := config.BindAddr
 	port := config.BindPort
-	listenOnUnixDomain := true
+	//listenOnUnixDomain := true
 
 	log.Info().Str("bind_addr", addr).Str("bind_port", port).
 		Msg("Listening and serving HTTP...")
 
-	if !strings.HasPrefix(addr, "unix:") {
+/*	if !strings.HasPrefix(addr, "unix:") {
 		listenOnUnixDomain = false
 	}
 
-/*	if listenOnUnixDomain {
+	if listenOnUnixDomain {
 		err = listenOnUnixSocket(addr, srv)
 	} else {
 		err = srv.ListenAndServe()

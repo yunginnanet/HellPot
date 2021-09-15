@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 )
 
 const (
-	version = "0.3"
-	title   = "HellPot"
+	Version = "0.3"
+	Title   = "HellPot"
 )
 
 var (
@@ -34,6 +35,7 @@ var (
 	f   *os.File
 	err error
 
+	NoColor         bool
 	customconfig    = false
 	home            string
 	configLocations []string
@@ -58,7 +60,7 @@ func init() {
 	if home, err = os.UserHomeDir(); err != nil {
 		panic(err)
 	}
-	prefConfigLocation = home + "/.config/" + title
+	prefConfigLocation = home + "/.config/" + Title
 	Opt = make(map[string]map[string]interface{})
 	snek = viper.New()
 }
@@ -83,34 +85,60 @@ func Init() {
 		snek.AddConfigPath(loc)
 	}
 
-	if err = snek.MergeInConfig(); err != nil {
+	if err = snek.MergeInConfig(); err != nil && runtime.GOOS != "windows" {
 		if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
 			if err = os.Mkdir(prefConfigLocation, 0755); err != nil {
 				println("error writing new config: " + err.Error())
-				os.Exit(1)
 			}
 		}
-		if err = snek.SafeWriteConfigAs(prefConfigLocation + "/" + "config.toml"); err != nil {
+
+		newconfig := prefConfigLocation + "/" + "config.toml"
+
+		if err = snek.SafeWriteConfigAs(newconfig); err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
+
+		Filename = newconfig
 	}
 
-	Filename = snek.ConfigFileUsed()
+	if runtime.GOOS == "windows" {
+		newconfig := "hellpot-config"
+		snek.SetConfigName(newconfig)
+		if err = snek.MergeInConfig(); err != nil {
+			if err = snek.SafeWriteConfigAs(newconfig + ".toml"); err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+		}
+
+		Filename = newconfig
+	}
+
+	if len(Filename) < 1 {
+		Filename = snek.ConfigFileUsed()
+	}
 
 	associate()
 }
 
 func setDefaults() {
-	var configSections = []string{"logger", "http"}
+	var (
+		configSections = []string{"logger", "http"}
+		deflogdir      = home + "/.config/" + Title + "/logs/"
+		defNoColor     = false
+	)
+
+	if runtime.GOOS == "windows" {
+		deflogdir = "logs/"
+		defNoColor = true
+	}
 
 	Opt["logger"] = map[string]interface{}{
-		"debug":     true,
-		"directory": home + "/.config/" + title + "/logs/",
-	}
-	Opt["data"] = map[string]interface{}{
-		"directory":  home + "/.config/" + title + "./.data/",
-		"maxsizeobj": 20,
+		"debug":             true,
+		"directory":         deflogdir,
+		"nocolor":           defNoColor,
+		"use_date_filename": true,
 	}
 	Opt["http"] = map[string]interface{}{
 		"bind_addr": "127.0.0.1",
@@ -127,10 +155,14 @@ func setDefaults() {
 }
 
 func acquireClue() {
-	configLocations = append(configLocations, prefConfigLocation)
-	configLocations = append(configLocations, "/etc/"+title+"/")
 	configLocations = append(configLocations, "./")
-	configLocations = append(configLocations, "../")
+
+	if runtime.GOOS != "windows" {
+		configLocations = append(configLocations, prefConfigLocation)
+		configLocations = append(configLocations, "/etc/"+Title+"/")
+		configLocations = append(configLocations, "../")
+		configLocations = append(configLocations, "../../")
+	}
 }
 
 func loadCustomConfig(path string) {
@@ -155,6 +187,11 @@ func loadCustomConfig(path string) {
 func argParse() {
 	for i, arg := range os.Args {
 		switch arg {
+		case "-h":
+			println("HellPot: use -c <file.toml> to specify config file.")
+			os.Exit(0)
+		case "--config":
+			fallthrough
 		case "-c":
 			if len(os.Args) <= i-1 {
 				panic("syntax error! expected file after -c")
@@ -180,6 +217,7 @@ func associate() {
 	Opt = newOpt
 	Debug = snek.GetBool("logger.debug")
 	logDir = snek.GetString("logger.directory")
+	NoColor = snek.GetBool("logger.nocolor")
 	BindAddr = snek.GetString("http.bind_addr")
 	BindPort = snek.GetString("http.bind_port")
 	Paths = snek.GetStringSlice("http.paths")
