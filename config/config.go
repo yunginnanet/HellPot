@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	version = "0.2"
+	version = "0.3"
 	title   = "HellPot"
 )
 
@@ -86,7 +86,8 @@ func Init() {
 	if err = snek.MergeInConfig(); err != nil {
 		if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
 			if err = os.Mkdir(prefConfigLocation, 0755); err != nil {
-				panic(err)
+				println("error writing new config: " + err.Error())
+				os.Exit(1)
 			}
 		}
 		if err = snek.SafeWriteConfigAs(prefConfigLocation + "/" + "config.toml"); err != nil {

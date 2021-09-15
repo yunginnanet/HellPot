@@ -9,10 +9,13 @@ import (
 
 var (
 	logFile *os.File
-	logDir  string
+	logDir string
+	logger zerolog.Logger
 )
-// Logger retrieves an instance of our zerolog loggger so we can hook it in our main package.
-func Logger() zerolog.Logger {
+
+// StartLogger instantiates an instance of our zerolog loggger so we can hook it in our main package.
+// While this does return a logger, it should not be used for additional retrievals of the logger. Use GetLogger()
+func StartLogger() zerolog.Logger {
 	logDir = snek.GetString("logger.directory")
 	if err := os.MkdirAll(logDir, 0755); err != nil {
 		println("cannot create log directory: " + logDir + "(" + err.Error() + ")")
@@ -23,5 +26,12 @@ func Logger() zerolog.Logger {
 		os.Exit(1)
 	}
 	multi := zerolog.MultiLevelWriter(zerolog.ConsoleWriter{Out: os.Stderr}, logFile)
-	return zerolog.New(multi).With().Timestamp().Logger()
+	logger = zerolog.New(multi).With().Timestamp().Logger()
+	return logger
+}
+
+// GetLogger retrieves our global logger object
+func GetLogger() zerolog.Logger {
+	// future logic here
+	return logger
 }

@@ -21,10 +21,6 @@ const banner = "ChtbOTc7NDBtIBtbOTc7NDNt4paEG1szMzs0MG3ilojilpIbWzk3OzQwbSAbWzMz
   and just fmt.Println(dec) to print the banner without additional styling
 */
 func Banner() {
-	if len(banner) < 1 {
-		panic("invalid banner data")
-	}
-
 	dec, _ := base64.StdEncoding.DecodeString(banner)
 
 	scanner := bufio.NewScanner(strings.NewReader(string(dec)))

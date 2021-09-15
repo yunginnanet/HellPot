@@ -1,4 +1,4 @@
-package main
+package heffalump
 
 func getSrc() string {
 	return gz(b64d(srcGz))

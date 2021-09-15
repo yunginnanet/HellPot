@@ -5,13 +5,14 @@ import (
 
 	"github.com/yunginnanet/HellPot/config"
 	"github.com/yunginnanet/HellPot/extra"
+	"github.com/yunginnanet/HellPot/http"
 )
 
 var log zerolog.Logger
 
 func init() {
 	config.Init()
-	log = config.Logger()
+	log = config.StartLogger()
 	extra.Banner()
 	if config.Debug {
 		log.Debug().Msg("debug enabled")
@@ -20,5 +21,5 @@ func init() {
 }
 
 func main() {
-	startPot()
+	http.StartPot()
 }
