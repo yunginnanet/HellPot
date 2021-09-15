@@ -53,6 +53,7 @@ var (
 	f   *os.File
 	err error
 
+	NoColorForce    = false
 	NoColor         bool
 	customconfig    = false
 	home            string
@@ -159,10 +160,10 @@ func setDefaults() {
 		"use_date_filename": true,
 	}
 	Opt["http"] = map[string]interface{}{
-		"use_unix_socket": false,
-		"unix_socket":     "/var/run/hellpot",
-		"bind_addr":       "127.0.0.1",
-		"bind_port":       "8080",
+		"use_unix_socket":  false,
+		"unix_socket_path": "/var/run/hellpot",
+		"bind_addr":        "127.0.0.1",
+		"bind_port":        "8080",
 		"paths": []string{
 			"wp-login.php",
 			"wp-login",
@@ -215,12 +216,17 @@ func argParse() {
 	for i, arg := range os.Args {
 		switch arg {
 		case "-h":
-			println("HellPot: use -c <file.toml> to specify config file.")
+			println("HellPot Usage")
+			println("-c <config.toml> - Specify config file")
+			println("--nocolor - disable color and banner ")
+			println("--banner - show banner + version and exit")
 			os.Exit(0)
-		case "--config":
-			fallthrough
+		case "--nocolor":
+			NoColorForce = true
 		case "--banner":
 			BannerOnly = true
+		case "--config":
+			fallthrough
 		case "-c":
 			if len(os.Args) <= i-1 {
 				panic("syntax error! expected file after -c")
@@ -246,7 +252,6 @@ func associate() {
 	Opt = newOpt
 	Debug = snek.GetBool("logger.debug")
 	logDir = snek.GetString("logger.directory")
-	NoColor = snek.GetBool("logger.nocolor")
 	BindAddr = snek.GetString("http.bind_addr")
 	BindPort = snek.GetString("http.bind_port")
 	Paths = snek.GetStringSlice("http.paths")
@@ -254,7 +259,10 @@ func associate() {
 	FakeServerName = snek.GetString("diception.server_name")
 	RestrictConcurrency = snek.GetBool("performance.restrict_concurrency")
 	MaxWorkers = snek.GetInt("performance.max_workers")
-
+	NoColor = snek.GetBool("logger.nocolor")
+	if NoColorForce {
+		NoColor = true
+	}
 	if UseUnixSocket {
 		UnixSocketPath = snek.GetString("http.unix_socket_path")
 	}

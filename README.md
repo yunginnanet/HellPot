@@ -34,19 +34,26 @@ location '/wp-login.php' {
   If the configuration  file is missing, the default settings will automatically drop itself in the current working directory as `config.toml`.  
     
 ```  
-title = "HellPot"
-
-[logger]
-debug = false
-log_directory = "./logs/"
+[diception]
+  server_name = "nginx"
 
 [http]
-bind_addr = "127.0.0.1"
-bind_port = "8080"
-# paths to be added to robots.txt that we will respond to
-paths = [
-        "wp-login.php",
-        "wp-login",
-]
+  bind_addr = "127.0.0.1"
+  bind_port = "8080"
+  paths = ["wp-login.php","wp-login"]
+  unix_socket = "/var/run/hellpot"
+  use_unix_socket = false
+
+[logger]
+  debug = true
+  directory = "/home/kayos/.config/HellPot/logs/"
+  nocolor = false
+  use_date_filename = true
+
+[performance]
+  # max_workers is only valid if restrict_concurrency is true
+  restrict_concurrency = false
+  max_workers = 256
+
 ```
   

@@ -65,9 +65,7 @@ func listenOnUnixSocket(addr string, r *router.Router) error {
 	unixAddr, err = net.ResolveUnixAddr("unix", addr)
 	if err == nil {
 		// Always unlink sockets before listening on them
-		if err2 := syscall.Unlink(addr); err2 != nil {
-			panic(err2)
-		}
+		syscall.Unlink(addr)
 		unixListener, err = net.ListenUnix("unix", unixAddr)
 		if err == nil {
 			err = fasthttp.Serve(unixListener, r.Handler)
