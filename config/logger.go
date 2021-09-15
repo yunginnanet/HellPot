@@ -1,10 +1,11 @@
 package config
 
 import (
-	"github.com/rs/zerolog"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 var (
@@ -34,6 +35,7 @@ func Logger() zerolog.Logger {
 		println("cannot create log file: " + err.Error())
 		os.Exit(1)
 	}
-	multi := zerolog.MultiLevelWriter(zerolog.ConsoleWriter{Out: os.Stderr}, logFile)
+
+	multi := zerolog.MultiLevelWriter(zerolog.ConsoleWriter{NoColor: NoColor, Out: os.Stdout}, logFile)
 	return zerolog.New(multi).With().Timestamp().Logger()
 }
