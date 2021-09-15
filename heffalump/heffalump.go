@@ -49,6 +49,12 @@ func (h *Heffalump) putBuffer(buf []byte) {
 // WriteHell writes markov chain heffalump hell to the provided io.Writer
 // https://github.com/carlmjohnson/heffalump
 func (h *Heffalump) WriteHell(w io.Writer) int64 {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error().Interface("caller", r).Msg("panic recovered!")
+		}
+	}()
+
 	buf := h.getBuffer()
 	defer h.putBuffer(buf)
 

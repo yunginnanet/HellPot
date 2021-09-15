@@ -16,6 +16,7 @@ const (
 	Title   = "HellPot"
 )
 
+// "http"
 var (
 	// BindAddr is defined via our toml configuration file. It is the address that HellPot listens on.
 	BindAddr string
@@ -24,6 +25,21 @@ var (
 	// Paths are defined via our toml configuration file. These are the paths that HellPot will present for "robots.txt"
 	//       These are also the paths that HellPot will respond for. Other paths will throw a warning and will serve a 404.
 	Paths []string
+
+	UseUnixSocket  bool
+	UnixSocketPath = ""
+)
+
+// "performance"
+var (
+	RestrictConcurrency bool
+	MaxWorkers int
+)
+
+// "diception"
+var (
+	// FakeServerName is our configured value for the "Server: " response header when serving HTTP clients
+	FakeServerName string
 )
 
 var (
@@ -124,7 +140,7 @@ func Init() {
 
 func setDefaults() {
 	var (
-		configSections = []string{"logger", "http"}
+		configSections = []string{"logger", "http", "performance", "diception"}
 		deflogdir      = home + "/.config/" + Title + "/logs/"
 		defNoColor     = false
 	)
@@ -141,12 +157,21 @@ func setDefaults() {
 		"use_date_filename": true,
 	}
 	Opt["http"] = map[string]interface{}{
-		"bind_addr": "127.0.0.1",
-		"bind_port": "8080",
+		"use_unix_socket": false,
+		"unix_socket":     "/var/run/hellpot",
+		"bind_addr":       "127.0.0.1",
+		"bind_port":       "8080",
 		"paths": []string{
 			"wp-login.php",
 			"wp-login",
 		},
+	}
+	Opt["performance"] = map[string]interface{}{
+		"restrict_concurrency": false,
+		"max_workers": 256,
+	}
+	Opt["diception"] = map[string]interface{}{
+		"server_name": "nginx",
 	}
 
 	for _, def := range configSections {
@@ -221,6 +246,14 @@ func associate() {
 	BindAddr = snek.GetString("http.bind_addr")
 	BindPort = snek.GetString("http.bind_port")
 	Paths = snek.GetStringSlice("http.paths")
+	UseUnixSocket = snek.GetBool("http.use_unix_socket")
+	FakeServerName = snek.GetString("diception.server_name")
+	RestrictConcurrency = snek.GetBool("performance.restrict_concurrency")
+	MaxWorkers = snek.GetInt("performance.max_workers")
+
+	if UseUnixSocket {
+		UnixSocketPath = snek.GetString("http.unix_socket_path")
+	}
 
 	if Debug {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)

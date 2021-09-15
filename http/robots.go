@@ -23,5 +23,4 @@ func robotsTXT(ctx *fasthttp.RequestCtx) {
 	if _, err := fmt.Fprintf(ctx, robotsTxt+paths+"\r\n"); err != nil {
 		log.Error().Err(err).Msg("SERVE_ROBOTS_ERROR")
 	}
-	return
 }
