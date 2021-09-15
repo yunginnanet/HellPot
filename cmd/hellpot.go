@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/gorilla/mux"
-	"github.com/yunginnanet/HellPot/src/config"
 	"net"
 	"net/http"
 	"os"
@@ -11,6 +9,10 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/gorilla/mux"
+
+	"github.com/yunginnanet/HellPot/config"
 )
 
 const robotsTxt = "User-agent: *\r\n"

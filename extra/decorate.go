@@ -1,5 +1,5 @@
 // from git.tcp.direct/kayos/CokePlate
-package decorate
+package extra
 
 import (
 	"bufio"

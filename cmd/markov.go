@@ -16,7 +16,7 @@ import (
 func ScanHTML(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	// Skip leading spaces.
 	var r rune
-	start := 0
+	var start = 0
 	for width := 0; start < len(data); start += width {
 		r, width = utf8.DecodeRune(data[start:])
 		if !unicode.IsSpace(r) {
@@ -53,8 +53,8 @@ func ScanHTML(data []byte, atEOF bool) (advance int, token []byte, err error) {
 
 type tokenPair [2]string
 
-// DefaultMarkovMap is a Markov chain based on Src.
-var DefaultMarkovMap = MakeMarkovMap(strings.NewReader(Src))
+// DefaultMarkovMap is a Markov chain based on src.
+var DefaultMarkovMap = MakeMarkovMap(strings.NewReader(getSrc()))
 
 // MarkovMap is a map that acts as a Markov chain generator.
 type MarkovMap map[tokenPair][]string

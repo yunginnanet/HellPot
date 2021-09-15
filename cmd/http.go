@@ -1,12 +1,14 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/yunginnanet/HellPot/src/config"
 	"io"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gorilla/mux"
+
+	"github.com/yunginnanet/HellPot/config"
 )
 
 // DefaultHoneypot is an http.HandlerFunc that serves random HTML from the
@@ -31,7 +33,19 @@ func NewHoneypot(mm MarkovMap, buffsize int) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		var inscope bool = false
+		var inscope = false
+		var remoteAddr string
+
+		remoteAddr = r.RemoteAddr
+
+		if len(r.Header.Values("X-Real-IP")) > 0 {
+			remoteAddr = r.Header.Values("X-Real-IP")[0]
+		}
+
+		slog := log.With().
+			Str("UserAgent", r.UserAgent()).
+			Str("REMOTE_ADDR", remoteAddr).
+			Interface("URL", r.URL.RequestURI()).Logger()
 
 		if vars["path"] == "robots.txt" {
 			var paths string
@@ -39,14 +53,15 @@ func NewHoneypot(mm MarkovMap, buffsize int) http.HandlerFunc {
 				paths = paths + "Disallow: " + p + "\r\n"
 			}
 
-			log.Debug().
-				Str("UserAgent", r.UserAgent()).
-				Strs("REMOTE_ADDR", r.Header.Values("X-Real-IP")).
+			slog.Debug().
 				Strs("PATHS", config.Paths).
 				Msg("SERVE_ROBOTS")
 
+			// Not writing this header broke HellPot in ~go1.17
+			w.WriteHeader(200)
+
 			if _, err := io.WriteString(w, robotsTxt+paths+"\r\n"); err != nil {
-				log.Error().Err(err).Msg("SERVE_ROBOTS_ERROR")
+				slog.Error().Err(err).Msg("SERVE_ROBOTS_ERROR")
 			}
 			return
 		}
@@ -58,28 +73,28 @@ func NewHoneypot(mm MarkovMap, buffsize int) http.HandlerFunc {
 		}
 
 		if !inscope {
-			log.Warn().
-				Str("UserAgent", r.UserAgent()).
-				Str("URL", r.URL.RequestURI()).
-				Strs("REMOTE_ADDR", r.Header.Values("X-Real-IP")).
-				Msg("Request outside of configured scope!")
+			w.WriteHeader(404)
+			slog.Warn().Msg("Request outside of configured scope!")
 			return
 		}
 
 		s := time.Now()
-		log.Info().
-			Str("UserAgent", r.UserAgent()).
-			Interface("URL", r.URL.RequestURI()).
-			Strs("REMOTE_ADDR", r.Header.Values("X-Real-IP")).
-			Msg("SERVE")
+		slog.Info().Msg("SERVE")
+
 		buf := getBuffer()
 		defer putBuffer(buf)
-		io.WriteString(w, "<HTML>\n<BODY>\n")
-		n, _ := io.CopyBuffer(w, mm, buf)
-		log.Info().
-			Str("UserAgent", r.UserAgent()).
-			Interface("URL", r.URL.RequestURI()).
-			Strs("REMOTE_ADDR", r.Header.Values("X-Real-IP")).
+
+		if _, err := io.WriteString(w, "<HTML>\n<BODY>\n"); err != nil {
+			slog.Debug().Caller().Err(err).Msg("WriteString_fail")
+		}
+
+		var n int64
+		var err error
+		if n, err = io.CopyBuffer(w, mm, buf); err != nil {
+			slog.Debug().Caller().Err(err).Msg("CopyBuffer_fail")
+		}
+
+		slog.Info().
 			Int64("BYTES", n).
 			Dur("DURATION", time.Since(s)).
 			Msg("FINISH")
