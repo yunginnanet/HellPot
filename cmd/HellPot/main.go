@@ -21,5 +21,5 @@ func init() {
 }
 
 func main() {
-	http.StartPot()
+	log.Error().Err(http.Serve()).Msg("HTTP err")
 }
