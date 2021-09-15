@@ -16,7 +16,8 @@ func init() {
 	if config.Debug {
 		log.Debug().Msg("debug enabled")
 	}
-	log.Info().Str("config", config.Filename).Msg("initialization finished")
+	log.Info().Str("file", config.Filename).Msg("current config")
+	log.Info().Str("file", config.CurrentLogFile).Msg("current log")
 }
 
 func main() {

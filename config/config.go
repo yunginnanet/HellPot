@@ -83,19 +83,24 @@ func Init() {
 		snek.AddConfigPath(loc)
 	}
 
+	Filename = snek.ConfigFileUsed()
+
 	if err = snek.MergeInConfig(); err != nil {
 		if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
 			if err = os.Mkdir(prefConfigLocation, 0755); err != nil {
 				panic(err)
 			}
 		}
-		if err = snek.SafeWriteConfigAs(prefConfigLocation + "/" + "config.toml"); err != nil {
+
+		newconfig := prefConfigLocation + "/" + "config.toml"
+
+		if err = snek.SafeWriteConfigAs(newconfig); err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
-	}
 
-	Filename = snek.ConfigFileUsed()
+		Filename = newconfig
+	}
 
 	associate()
 }
@@ -104,12 +109,9 @@ func setDefaults() {
 	var configSections = []string{"logger", "http"}
 
 	Opt["logger"] = map[string]interface{}{
-		"debug":     true,
-		"directory": home + "/.config/" + title + "/logs/",
-	}
-	Opt["data"] = map[string]interface{}{
-		"directory":  home + "/.config/" + title + "./.data/",
-		"maxsizeobj": 20,
+		"debug":             true,
+		"directory":         home + "/.config/" + title + "/logs/",
+		"use_date_filename": true,
 	}
 	Opt["http"] = map[string]interface{}{
 		"bind_addr": "127.0.0.1",
