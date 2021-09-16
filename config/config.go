@@ -12,11 +12,18 @@ import (
 )
 
 const (
+	// Version roughly represents the applications current version.
 	Version = "0.3"
+	// Title is the name of the application used throughout the configuration process.
 	Title   = "HellPot"
 )
 
-var BannerOnly = false
+var (
+	// BannerOnly when toggled causes HellPot to only print the banner and version then exit.
+	BannerOnly = false
+	// ConfigGen when toggled causes HellPot to write its default config to the cwd and then exit.
+	ConfigGen  = false
+)
 
 // "http"
 var (
@@ -28,7 +35,9 @@ var (
 	//       These are also the paths that HellPot will respond for. Other paths will throw a warning and will serve a 404.
 	Paths []string
 
+	// UseUnixSocket when toggled disables the TCP listener and listens on the given UnixSocketPath.
 	UseUnixSocket  bool
+	// UnixSocketPath is the path of the unix socket used when UseUnixSocket is toggled.
 	UnixSocketPath = ""
 )
 
@@ -180,6 +189,15 @@ func setDefaults() {
 	for _, def := range configSections {
 		snek.SetDefault(def, Opt[def])
 	}
+
+	if ConfigGen {
+		if err = snek.SafeWriteConfigAs("./config.toml"); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
 }
 
 func acquireClue() {
@@ -211,16 +229,23 @@ func loadCustomConfig(path string) {
 	customconfig = true
 }
 
+func printUsage() {
+	println("\n"+Title+" v"+Version+" Usage\n")
+	println("-c <config.toml> - Specify config file")
+	println("--nocolor - disable color and banner ")
+	println("--banner - show banner + version and exit")
+	println("--genconfig - write default config to 'default.toml' then exit")
+	os.Exit(0)
+}
+
 // TODO: should probably just make a proper CLI with flags or something
 func argParse() {
 	for i, arg := range os.Args {
 		switch arg {
 		case "-h":
-			println("HellPot Usage")
-			println("-c <config.toml> - Specify config file")
-			println("--nocolor - disable color and banner ")
-			println("--banner - show banner + version and exit")
-			os.Exit(0)
+			printUsage()
+		case "--genconfig":
+			ConfigGen = true
 		case "--nocolor":
 			NoColorForce = true
 		case "--banner":

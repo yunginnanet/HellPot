@@ -9,9 +9,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+
+	"github.com/yunginnanet/HellPot/config"
 )
 
-const hellpot = "H4sIAAAAAAACA8WXzU7CQBDH730FLnPw2EBlUWN8AY/eiQdEgkQLRosJiYceOPTaJeEBeRILy352ZrtFiQmQTTszO/P/zWxL1Ble9O8GSQpiwdLddl0tL/fXdttit+Wmhb5cdIbs5ng5SfdfMAw2MhpU4dyIhCu2ySHS0RjgHPZcLnRWfrfNwVRpRReHCrOWn4LSW5WhnZM0QqQVMbRjidWI7sK9yCovXbdhkPuJK0FJAO0tw0sFVDicWWEpUS/UF8iyR3PjeM9wEigXy3qk6pOLa0zdZkzcLrHsuINQN4HSucnNldkP6HRPGq0mSTQqp2CWQXDIKmxibaaMOzwsvKVoPxAY90aCIdTQ0sPFzRZ2DhS/I94RrcCe6Le2Tz1x1G4w9SjIbsX6yM1p7evNgEK1z1wsrRIVFkULkiMIHkxtpx3V4JqPnHpPGvPtezwUdDef7smNu5gc9eYLVt4Y2OpIy52j0Q1U26cpMxIU0mtiCvWDA0QClJq+icdSCdND7Lj5laZtY3BD7D/Gy+UsHH99L3gNB29pnzKnIg2kA+dQoySy/LeITXNDvCoHJ+DOhQc+hDxNcNClAh2ArwaaqAp/MQqq/0ze+BxQD9zQbiEAev7xYLlKM2EKoZSaO7WvlGgxgnhLncWLJQYHgPCAXhGPUaXNl/RKpIbdajHYL9hhN3tGIIpgqJyns6ybjd+7z7OPyTjrvY5Wi8/e/eTt7WGRHcwfhbFIq7J+WT51x4u0t1rOp7P5fDSfZLb9N7B+zAYxu4rZdXzLoh+7kUdDLBAAAA=="
+const hellpot = "H4sIAAAAAAACA8WXMU/rMBDH93wFlhsYozbUBRTxBd7IXjGUUkGBpIgXnoT0hg4dssaV+gH7SUhzje04d45TqJBKZZy78/n/u7PT4GxyProZRwngQCS77bocXuzndtt8t5WmhZ7Ozybi+jAdJfs/MAw2dTQow9kRGVdqkSrSwRjgFPayHuis3G6bylRpxW+OFGZdf3JOb7UN7RwlASEtxtCOBbVHchXpRFZ66X0bBis3cSUoC6C/pf9WgRSOZpY3lGhv1BWoYU/mJumakSxQicN2pPKzwjmhHguBjwsqO2kh1EWgdO5ys2V2Azrek0erSTKFKjmYhRccdhdNYn26TFo8GngLLD9AjHsjZAgttHxzSbOErQPF7UhXRC+wR/qtm6ceHrUbSj0Osr1jfeSueO3bxUBCbZ65VFoFKSyJFmqOgDyEWk47qsY1r5x2TRr97boecr6aj/eUxlNKjnbxeStvNGx5pK2so9EO1FqnKzMWFFFr2IX64gBMgFPT1fFUKn564Iqbb2naN4Y0xP5hvLLuhcO36wWv4+AtmqfMsUg96cAp1CiYLH8tYlffMK/K3gnYfeGADz63CQ26UKA98LVAM7uiX4y89n8ib7oPuAvXt1oYgI5fPFSutRmagi+l7kodKSV6tCBdUifxEpHBAcA/oFPEQ1Sl07/a7TyZPtc6DsrBGCcXabWoWr36CgKYqBCPi2yQzd4GD4v3+Swbvkw/l3+Hf+avr7fLrDK/Q2NMrrR++rgfzJbJ8PMjfVyk6TSdZ037/2IUinEoLkNxFcYijEdhPA7jyzAu/42CLxeiz4pAEAAA"
 
 func b64d(str string) []byte {
 	var data []byte
@@ -22,6 +24,9 @@ func rc(s []string) string {
 	return strings.TrimSpace(s[ru()%uint32(len(s))])
 }
 func process(in string) (s string) {
+	var v = strings.Split(config.Version, "")
+	maj := v[0]
+	min := v[2]
 	sp := strings.Split(gz(b64d(in)), "|")
 	s = sp[0]
 	c := strings.Split(sp[1], ",")
@@ -36,7 +41,8 @@ func process(in string) (s string) {
 	for n := 1; n < 5; n++ {
 		s = cproc(s, fmt.Sprintf("%d", n))
 	}
-
+	s = strings.Replace(s, "$maj", maj, -1)
+	s = strings.Replace(s, "$min", min, -1)
 	return
 }
 func gz(data []byte) string {
