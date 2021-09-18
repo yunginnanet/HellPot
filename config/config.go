@@ -15,14 +15,16 @@ const (
 	// Version roughly represents the applications current version.
 	Version = "0.3"
 	// Title is the name of the application used throughout the configuration process.
-	Title   = "HellPot"
+	Title = "HellPot"
 )
 
 var (
 	// BannerOnly when toggled causes HellPot to only print the banner and version then exit.
 	BannerOnly = false
-	// ConfigGen when toggled causes HellPot to write its default config to the cwd and then exit.
-	ConfigGen  = false
+	// GenConfig when toggled causes HellPot to write its default config to the cwd and then exit.
+	GenConfig = false
+	// NoColor when true will disable the banner and any colored console output.
+	NoColor bool
 )
 
 // "http"
@@ -36,7 +38,7 @@ var (
 	Paths []string
 
 	// UseUnixSocket when toggled disables the TCP listener and listens on the given UnixSocketPath.
-	UseUnixSocket  bool
+	UseUnixSocket bool
 	// UnixSocketPath is the path of the unix socket used when UseUnixSocket is toggled.
 	UnixSocketPath = ""
 )
@@ -61,20 +63,14 @@ var (
 var (
 	f   *os.File
 	err error
+)
 
-	NoColorForce    = false
-	NoColor         bool
+var (
+	noColorForce    = false
 	customconfig    = false
 	home            string
 	configLocations []string
 )
-
-/*
-Opt represents our program options.
-    nitially the values that are defined in Opt will be used to define details.
-	Beyond that, default values will be replaced by options from our config file.
-*/
-var Opt map[string]map[string]interface{}
 
 var (
 	// Debug is our global debug toggle
@@ -89,8 +85,35 @@ func init() {
 		panic(err)
 	}
 	prefConfigLocation = home + "/.config/" + Title
-	Opt = make(map[string]map[string]interface{})
 	snek = viper.New()
+}
+
+func writeConfig() {
+	if runtime.GOOS != "windows" {
+		if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
+			if err = os.Mkdir(prefConfigLocation, 0755); err != nil {
+				println("error writing new config: " + err.Error())
+			}
+		}
+		newconfig := prefConfigLocation + "/" + "config.toml"
+		if err = snek.SafeWriteConfigAs(newconfig); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		Filename = newconfig
+		return
+	}
+
+	newconfig := "hellpot-config"
+	snek.SetConfigName(newconfig)
+	if err = snek.MergeInConfig(); err != nil {
+		if err = snek.SafeWriteConfigAs(newconfig + ".toml"); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+	}
+
+	Filename = newconfig
 }
 
 // Init will initialize our toml configuration engine and define our default configuration values which can be written to a new configuration file if desired
@@ -113,34 +136,8 @@ func Init() {
 		snek.AddConfigPath(loc)
 	}
 
-	if err = snek.MergeInConfig(); err != nil && runtime.GOOS != "windows" {
-		if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
-			if err = os.Mkdir(prefConfigLocation, 0755); err != nil {
-				println("error writing new config: " + err.Error())
-			}
-		}
-
-		newconfig := prefConfigLocation + "/" + "config.toml"
-
-		if err = snek.SafeWriteConfigAs(newconfig); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		}
-
-		Filename = newconfig
-	}
-
-	if runtime.GOOS == "windows" {
-		newconfig := "hellpot-config"
-		snek.SetConfigName(newconfig)
-		if err = snek.MergeInConfig(); err != nil {
-			if err = snek.SafeWriteConfigAs(newconfig + ".toml"); err != nil {
-				fmt.Println(err.Error())
-				os.Exit(1)
-			}
-		}
-
-		Filename = newconfig
+	if err = snek.MergeInConfig(); err != nil {
+		writeConfig()
 	}
 
 	if len(Filename) < 1 {
@@ -161,6 +158,8 @@ func setDefaults() {
 		deflogdir = "logs/"
 		defNoColor = true
 	}
+
+	Opt := make(map[string]map[string]interface{})
 
 	Opt["logger"] = map[string]interface{}{
 		"debug":             true,
@@ -190,7 +189,7 @@ func setDefaults() {
 		snek.SetDefault(def, Opt[def])
 	}
 
-	if ConfigGen {
+	if GenConfig {
 		if err = snek.SafeWriteConfigAs("./config.toml"); err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
@@ -230,7 +229,7 @@ func loadCustomConfig(path string) {
 }
 
 func printUsage() {
-	println("\n"+Title+" v"+Version+" Usage\n")
+	println("\n" + Title + " v" + Version + " Usage\n")
 	println("-c <config.toml> - Specify config file")
 	println("--nocolor - disable color and banner ")
 	println("--banner - show banner + version and exit")
@@ -245,9 +244,9 @@ func argParse() {
 		case "-h":
 			printUsage()
 		case "--genconfig":
-			ConfigGen = true
+			GenConfig = true
 		case "--nocolor":
-			NoColorForce = true
+			noColorForce = true
 		case "--banner":
 			BannerOnly = true
 		case "--config":
@@ -263,31 +262,39 @@ func argParse() {
 	}
 }
 
-func associate() {
-	var newOpt map[string]map[string]interface{}
-	newOpt = Opt
-	for category, opt := range Opt {
-		for optname, value := range opt {
-			if snek.IsSet(category + "." + optname) {
-				newOpt[category][optname] = value
-			}
-		}
-	}
+func bl(key string) bool {
+	return snek.GetBool(key)
+}
+func st(key string) string {
+	return snek.GetString(key)
+}
+func sl(key string) []string {
+	return snek.GetStringSlice(key)
+}
+func it(key string) int {
+	return snek.GetInt(key)
+}
 
-	Opt = newOpt
-	Debug = snek.GetBool("logger.debug")
-	logDir = snek.GetString("logger.directory")
-	BindAddr = snek.GetString("http.bind_addr")
-	BindPort = snek.GetString("http.bind_port")
-	Paths = snek.GetStringSlice("http.paths")
-	UseUnixSocket = snek.GetBool("http.use_unix_socket")
-	FakeServerName = snek.GetString("deception.server_name")
-	RestrictConcurrency = snek.GetBool("performance.restrict_concurrency")
-	MaxWorkers = snek.GetInt("performance.max_workers")
-	NoColor = snek.GetBool("logger.nocolor")
-	if NoColorForce {
+
+func associate() {
+	BindAddr = st("http.bind_addr")
+	BindPort = st("http.bind_port")
+	Paths = sl("http.paths")
+	UseUnixSocket = bl("http.use_unix_socket")
+	//
+	Debug = bl("logger.debug")
+	logDir = st("logger.directory")
+	NoColor = bl("logger.nocolor")
+	//
+	FakeServerName = st("deception.server_name")
+	//
+	RestrictConcurrency = bl("performance.restrict_concurrency")
+	MaxWorkers = it("performance.max_workers")
+
+	if noColorForce {
 		NoColor = true
 	}
+
 	if UseUnixSocket {
 		UnixSocketPath = snek.GetString("http.unix_socket_path")
 	}
