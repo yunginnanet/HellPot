@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"os"
 	"syscall"
 	"time"
 
@@ -65,10 +66,17 @@ func listenOnUnixSocket(addr string, r *router.Router) error {
 	unixAddr, err = net.ResolveUnixAddr("unix", addr)
 	if err == nil {
 		// Always unlink sockets before listening on them
-		syscall.Unlink(addr)
+		_ = syscall.Unlink(addr)
+		// Before we set socket permissions, we want to make sure only the user HellPot is running under
+		// has permission to the socket.
+		oldmask := syscall.Umask(0077)
 		unixListener, err = net.ListenUnix("unix", unixAddr)
+		syscall.Umask(oldmask)
 		if err == nil {
-			err = fasthttp.Serve(unixListener, r.Handler)
+			err = os.Chmod(unixAddr.Name, os.FileMode(config.UnixSocketPermissions))
+			if err == nil {
+				err = fasthttp.Serve(unixListener, r.Handler)
+			}
 		}
 	}
 	return err
