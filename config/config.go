@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"runtime"
+	"strconv"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
@@ -37,10 +38,13 @@ var (
 	//       These are also the paths that HellPot will respond for. Other paths will throw a warning and will serve a 404.
 	Paths []string
 
-	// UseUnixSocket when toggled disables the TCP listener and listens on the given UnixSocketPath.
+	// UseUnixSocket determines if we will listen for HTTP connections on a unix socket.
 	UseUnixSocket bool
-	// UnixSocketPath is the path of the unix socket used when UseUnixSocket is toggled.
-	UnixSocketPath = ""
+
+	// UnixSocketPath is defined via our toml configuration file. It is the path of the socket HellPot listens on
+	// if UseUnixSocket, also defined via our toml configuration file, is set to true.
+	UnixSocketPath        = ""
+	UnixSocketPermissions uint32
 )
 
 // "performance"
@@ -168,10 +172,11 @@ func setDefaults() {
 		"use_date_filename": true,
 	}
 	Opt["http"] = map[string]interface{}{
-		"use_unix_socket":  false,
-		"unix_socket_path": "/var/run/hellpot",
-		"bind_addr":        "127.0.0.1",
-		"bind_port":        "8080",
+		"use_unix_socket":         false,
+		"unix_socket_path":        "/var/run/hellpot",
+		"unix_socket_permissions": "0666",
+		"bind_addr":               "127.0.0.1",
+		"bind_port":               "8080",
 		"paths": []string{
 			"wp-login.php",
 			"wp-login",
@@ -297,6 +302,10 @@ func associate() {
 
 	if UseUnixSocket {
 		UnixSocketPath = snek.GetString("http.unix_socket_path")
+		parsedPermissions, err := strconv.ParseUint(snek.GetString("http.unix_socket_permissions"), 8, 32)
+		if err == nil {
+			UnixSocketPermissions = uint32(parsedPermissions)
+		}
 	}
 
 	if Debug {
