@@ -12,78 +12,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	// Version roughly represents the applications current version.
-	Version = "0.3"
-	// Title is the name of the application used throughout the configuration process.
-	Title = "HellPot"
-)
-
-var (
-	// BannerOnly when toggled causes HellPot to only print the banner and version then exit.
-	BannerOnly = false
-	// GenConfig when toggled causes HellPot to write its default config to the cwd and then exit.
-	GenConfig = false
-	// NoColor when true will disable the banner and any colored console output.
-	NoColor bool
-)
-
-// "http"
-var (
-	// BindAddr is defined via our toml configuration file. It is the address that HellPot listens on.
-	BindAddr string
-	// BindPort is defined via our toml configuration file. It is the port that HellPot listens on.
-	BindPort string
-	// Paths are defined via our toml configuration file. These are the paths that HellPot will present for "robots.txt"
-	//       These are also the paths that HellPot will respond for. Other paths will throw a warning and will serve a 404.
-	Paths []string
-
-	// UseUnixSocket determines if we will listen for HTTP connections on a unix socket.
-	UseUnixSocket bool
-
-	// UnixSocketPath is defined via our toml configuration file. It is the path of the socket HellPot listens on
-	// if UseUnixSocket, also defined via our toml configuration file, is set to true.
-	UnixSocketPath        = ""
-	UnixSocketPermissions uint32
-)
-
-// "performance"
-var (
-	RestrictConcurrency bool
-	MaxWorkers          int
-)
-
-// "deception"
-var (
-	// FakeServerName is our configured value for the "Server: " response header when serving HTTP clients
-	FakeServerName string
-)
-
-var (
-	// Filename returns the current location of our toml config file.
-	Filename string
-)
-
-var (
-	f   *os.File
-	err error
-)
-
-var (
-	noColorForce    = false
-	customconfig    = false
-	home            string
-	configLocations []string
-)
-
-var (
-	// Debug is our global debug toggle
-	Debug bool
-
-	prefConfigLocation string
-	snek               *viper.Viper
-)
-
 func init() {
 	if home, err = os.UserHomeDir(); err != nil {
 		panic(err)
@@ -128,12 +56,11 @@ func Init() {
 	argParse()
 
 	if customconfig {
-		associate()
+		associateExportedVariables()
 		return
 	}
 
-	acquireClue()
-
+	setConfigFileLocations()
 	setDefaults()
 
 	for _, loc := range configLocations {
@@ -148,12 +75,12 @@ func Init() {
 		Filename = snek.ConfigFileUsed()
 	}
 
-	associate()
+	associateExportedVariables()
 }
 
 func setDefaults() {
 	var (
-		configSections = []string{"logger", "http", "performance", "deception"}
+		configSections = []string{"logger", "http", "performance", "deception", "ssh"}
 		deflogdir      = home + "/.config/" + Title + "/logs/"
 		defNoColor     = false
 	)
@@ -204,7 +131,7 @@ func setDefaults() {
 
 }
 
-func acquireClue() {
+func setConfigFileLocations() {
 	configLocations = append(configLocations, "./")
 
 	if runtime.GOOS != "windows" {
@@ -267,34 +194,47 @@ func argParse() {
 	}
 }
 
-func bl(key string) bool {
-	return snek.GetBool(key)
-}
-func st(key string) string {
-	return snek.GetString(key)
-}
-func sl(key string) []string {
-	return snek.GetStringSlice(key)
-}
-func it(key string) int {
-	return snek.GetInt(key)
-}
+func processOpts() {
+	// string options and their exported variables
+	stringOpt := map[string]*string{
+		"http.bind_addr":        &HTTPBind,
+		"http.bind_port":        &HTTPPort,
+		"logger.directory":      &logDir,
+		"deception.server_name": &FakeServerName,
+	}
+	// string slice options and their exported variables
+	strSliceOpt := map[string]*[]string{
+		"http.paths": &Paths,
+	}
+	// bool options and their exported variables
+	boolOpt := map[string]*bool {
+		"http.use_unix_socket": &UseUnixSocket,
+		"logger.debug": &Debug,
+		"performance.restrict_concurrency": &RestrictConcurrency,
+		"logger.nocolor": &NoColor,
+	}
+	// integer options and their exported variables
+	intOpt := map[string]*int {
+		"performance.max_workers": &MaxWorkers,
+	}
 
 
-func associate() {
-	BindAddr = st("http.bind_addr")
-	BindPort = st("http.bind_port")
-	Paths = sl("http.paths")
-	UseUnixSocket = bl("http.use_unix_socket")
-	//
-	Debug = bl("logger.debug")
-	logDir = st("logger.directory")
-	NoColor = bl("logger.nocolor")
-	//
-	FakeServerName = st("deception.server_name")
-	//
-	RestrictConcurrency = bl("performance.restrict_concurrency")
-	MaxWorkers = it("performance.max_workers")
+	for key, opt := range stringOpt {
+		*opt = snek.GetString(key)
+	}
+	for key, opt := range strSliceOpt {
+		*opt = snek.GetStringSlice(key)
+	}
+	for key, opt := range boolOpt {
+		*opt = snek.GetBool(key)
+	}
+	for key, opt := range intOpt {
+		*opt = snek.GetInt(key)
+	}
+}
+
+func associateExportedVariables() {
+	processOpts()
 
 	if noColorForce {
 		NoColor = true

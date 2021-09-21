@@ -122,7 +122,7 @@ func getSrv(r *router.Router) fasthttp.Server {
 // Serve starts our HTTP server and request router
 func Serve() error {
 	log = config.GetLogger()
-	l := fmt.Sprintf("%s:%s", config.BindAddr, config.BindPort)
+	l := fmt.Sprintf("%s:%s", config.HTTPBind, config.HTTPPort)
 
 	r := router.New()
 	r.GET("/robots.txt", robotsTXT)
