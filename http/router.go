@@ -3,9 +3,7 @@ package http
 import (
 	"bufio"
 	"fmt"
-	"net"
-	"os"
-	"syscall"
+	"runtime"
 	"time"
 
 	"github.com/fasthttp/router"
@@ -59,29 +57,6 @@ func hellPot(ctx *fasthttp.RequestCtx) {
 
 }
 
-func listenOnUnixSocket(addr string, r *router.Router) error {
-	var err error
-	var unixAddr *net.UnixAddr
-	var unixListener *net.UnixListener
-	unixAddr, err = net.ResolveUnixAddr("unix", addr)
-	if err == nil {
-		// Always unlink sockets before listening on them
-		_ = syscall.Unlink(addr)
-		// Before we set socket permissions, we want to make sure only the user HellPot is running under
-		// has permission to the socket.
-		oldmask := syscall.Umask(0077)
-		unixListener, err = net.ListenUnix("unix", unixAddr)
-		syscall.Umask(oldmask)
-		if err == nil {
-			err = os.Chmod(unixAddr.Name, os.FileMode(config.UnixSocketPermissions))
-			if err == nil {
-				err = fasthttp.Serve(unixListener, r.Handler)
-			}
-		}
-	}
-	return err
-}
-
 func getSrv(r *router.Router) fasthttp.Server {
 	if !config.RestrictConcurrency {
 		config.MaxWorkers = fasthttp.DefaultConcurrency
@@ -132,7 +107,7 @@ func Serve() error {
 
 	srv := getSrv(r)
 
-	if !config.UseUnixSocket {
+	if !config.UseUnixSocket || runtime.GOOS == "windows" {
 		log.Info().Str("caller", l).Msg("Listening and serving HTTP...")
 		return srv.ListenAndServe(l)
 	}
