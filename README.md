@@ -2,7 +2,7 @@
    
 [![GoDoc](https://godoc.org/github.com/yunginnanet/HellPot?status.svg)](https://godoc.org/github.com/yunginnanet/HellPot) [![Go Report Card](https://goreportcard.com/badge/github.com/yunginnanet/HellPot)](https://goreportcard.com/report/github.com/yunginnanet/HellPot)
   
-### New (v0.3) fasthttp version roughly [~75%](https://github.com/yunginnanet/HellPot/issues/2) faster!
+### [v0.3 with fasthttp](https://github.com/yunginnanet/HellPot/releases/tag/v0.3) roughly [~75%](https://github.com/yunginnanet/HellPot/issues/2) faster!
   
 HellPot is an endless honeypot that sends bots to hell. Based on [Heffalump](https://github.com/carlmjohnson/heffalump).   
   
