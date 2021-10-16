@@ -36,20 +36,13 @@ HellPot uses [go modules](https://go.dev/blog/using-go-modules). This should mak
 
 ### YOLO Method:
 
-In the event of a missing configuration file, HellPot will attempt to place it's default config in
-* ) **$HOME/.config/HellPot/config.toml** (*nix) 
- 
-or
-
-* ) **./** (windows).
-
-This allows irresponsible souls to begin raining hellfire with ease, ***immediately***.
-
-The fastest, *spookiest* way to do so:
+In the event of a missing configuration file, HellPot will attempt to place it's default config in **$HOME/.config/HellPot/config.toml**. This allows irresponsible souls to begin raining hellfire with ease, ***immediately***:
 
 1 ) Download a [compiled release](https://github.com/yunginnanet/HellPot/releases/latest) 
 
 2 ) Run binary and immedidately begin sending clients directly to hell.
+
+---
 
 ### Reasonable Method:
 
@@ -61,11 +54,9 @@ The fastest, *spookiest* way to do so:
 
 4 ) Ponder your ~~existence~~ server's ability to handle your chosen performance values.
 
-5 ) *...* Edit `config.toml` again and probably lower concurrency limits.
+5 ) ./HellPot -c config.toml
 
-6 ) ./HellPot -c config.toml
-
-7 ) The sky is falling.
+666 ) 𝙏͘͝𝙝̓̓͛𝙚͑̈́̀ 𝙨͆͠͝𝙠͑̾͌𝙮̽͌͆ 𝙞̓̔̔𝙨͒͐͝ 𝙛͑̈́̚𝙖͛͒𝙡͑͆̽𝙡̾̚̚𝙞͋̒̒𝙣̾͛͝𝙜͒̒̀.́̔͝​
 
 ## Example Config (toml) 
    
