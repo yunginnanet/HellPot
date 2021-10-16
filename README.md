@@ -13,8 +13,6 @@ The source of the honeypot data is [The Birth of Tragedy (Hellenism and Pessimis
 
 ![Exploding Heffalump](hellgif.gif)
 
-Live example: <a href="https://vx-underground.org/wp-login.php" rel="nofollow">Do not follow this link.</a> It will flood your browser's memory and likely cause a crash.
-
 ## Example Web Server Config (nginx)  
     
 ```          
