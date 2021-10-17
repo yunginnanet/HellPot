@@ -20,9 +20,11 @@ func b64d(str string) []byte {
 	data, _ = base64.StdEncoding.DecodeString(str)
 	return data
 }
+
 func rc(s []string) string {
 	return strings.TrimSpace(s[ru()%uint32(len(s))])
 }
+
 func process(in string) (s string) {
 	var v = strings.Split(config.Version, "")
 	maj := v[0]
@@ -46,13 +48,19 @@ func process(in string) (s string) {
 	return
 }
 func gz(data []byte) string {
-	gz, _ := gzip.NewReader(bytes.NewReader(data))
-	out, _ := ioutil.ReadAll(gz)
+	gz, err1 := gzip.NewReader(bytes.NewReader(data))
+	out, err2 := ioutil.ReadAll(gz)
+	if err1 != nil || err2 != nil {
+		bannerFail(err1, err2)
+	}
 	return string(out)
 }
+
 func ru() uint32 {
 	b := make([]byte, 8192)
-	crip.Read(b)
+	if _, err := crip.Read(b); err != nil {
+		bannerFail(err)
+	}
 	return binary.LittleEndian.Uint32(b)
 }
 

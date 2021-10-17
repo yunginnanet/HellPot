@@ -8,8 +8,14 @@ import (
 )
 
 func gz(data []byte) string {
-	gz, _ := gzip.NewReader(bytes.NewReader(data))
-	out, _ := ioutil.ReadAll(gz)
+	gz, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		panic(err)
+	}
+	out, err := ioutil.ReadAll(gz)
+	if err != nil {
+		panic(err)
+	}
 	return string(out)
 }
 

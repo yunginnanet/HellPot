@@ -13,7 +13,6 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/valyala/fasthttp v1.30.0
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	gopkg.in/ini.v1 v1.53.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

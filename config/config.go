@@ -21,28 +21,29 @@ func init() {
 }
 
 func writeConfig() {
-	if runtime.GOOS != "windows" {
-		if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
-			if err = os.Mkdir(prefConfigLocation, 0755); err != nil {
-				println("error writing new config: " + err.Error())
+	if runtime.GOOS == "windows" {
+		newconfig := "hellpot-config"
+		snek.SetConfigName(newconfig)
+		if err = snek.MergeInConfig(); err != nil {
+			if err = snek.SafeWriteConfigAs(newconfig + ".toml"); err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
 			}
 		}
-		newconfig := prefConfigLocation + "/" + "config.toml"
-		if err = snek.SafeWriteConfigAs(newconfig); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		}
-		Filename = newconfig
 		return
 	}
 
-	newconfig := "hellpot-config"
-	snek.SetConfigName(newconfig)
-	if err = snek.MergeInConfig(); err != nil {
-		if err = snek.SafeWriteConfigAs(newconfig + ".toml"); err != nil {
-			fmt.Println(err.Error())
+	if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
+		if err = os.MkdirAll(prefConfigLocation, 0755); err != nil {
+			println("error writing new config: " + err.Error())
 			os.Exit(1)
 		}
+	}
+
+	newconfig := prefConfigLocation + "/" + "config.toml"
+	if err = snek.SafeWriteConfigAs(newconfig); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 
 	Filename = newconfig
@@ -207,17 +208,16 @@ func processOpts() {
 		"http.paths": &Paths,
 	}
 	// bool options and their exported variables
-	boolOpt := map[string]*bool {
-		"http.use_unix_socket": &UseUnixSocket,
-		"logger.debug": &Debug,
+	boolOpt := map[string]*bool{
+		"http.use_unix_socket":             &UseUnixSocket,
+		"logger.debug":                     &Debug,
 		"performance.restrict_concurrency": &RestrictConcurrency,
-		"logger.nocolor": &NoColor,
+		"logger.nocolor":                   &NoColor,
 	}
 	// integer options and their exported variables
-	intOpt := map[string]*int {
+	intOpt := map[string]*int{
 		"performance.max_workers": &MaxWorkers,
 	}
-
 
 	for key, opt := range stringOpt {
 		*opt = snek.GetString(key)

@@ -9,6 +9,7 @@ import (
 )
 
 var (
+	// CurrentLogFile is used for accessing the location of the currently used log file across packages.
 	CurrentLogFile string
 	logFile        *os.File
 	logDir         string

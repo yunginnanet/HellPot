@@ -5,6 +5,7 @@ package http
 
 import (
 	"errors"
+
 	"github.com/fasthttp/router"
 )
 
