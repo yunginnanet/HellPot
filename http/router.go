@@ -14,7 +14,7 @@ import (
 	"github.com/yunginnanet/HellPot/heffalump"
 )
 
-var log zerolog.Logger
+var log *zerolog.Logger
 
 func getRealRemote(ctx *fasthttp.RequestCtx) string {
 	xrealip := string(ctx.Request.Header.Peek("X-Real-IP"))
@@ -62,6 +62,8 @@ func getSrv(r *router.Router) fasthttp.Server {
 		config.MaxWorkers = fasthttp.DefaultConcurrency
 	}
 
+	log = config.GetLogger()
+
 	return fasthttp.Server{
 		// User defined server name
 		// Likely not useful if behind a reverse proxy without additional configuration of the proxy server.
@@ -91,13 +93,14 @@ func getSrv(r *router.Router) fasthttp.Server {
 		DisableKeepalive: true,
 
 		Handler: r.Handler,
+		Logger: log,
 	}
 }
 
 // Serve starts our HTTP server and request router
 func Serve() error {
 	log = config.GetLogger()
-	l := fmt.Sprintf("%s:%s", config.HTTPBind, config.HTTPPort)
+	l := config.HTTPBind + ":" + config.HTTPPort
 
 	r := router.New()
 	r.GET("/robots.txt", robotsTXT)

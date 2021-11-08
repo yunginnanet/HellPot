@@ -49,7 +49,7 @@ func StartLogger() zerolog.Logger {
 }
 
 // GetLogger retrieves our global logger object
-func GetLogger() zerolog.Logger {
+func GetLogger() *zerolog.Logger {
 	// future logic here
-	return logger
+	return &logger
 }

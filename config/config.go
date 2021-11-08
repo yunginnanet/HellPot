@@ -140,7 +140,6 @@ func setConfigFileLocations() {
 		configLocations = append(configLocations, "/etc/"+Title+"/")
 		configLocations = append(configLocations, "../")
 		configLocations = append(configLocations, "../../")
-		configLocations = append(configLocations, "./")
 
 	}
 }
