@@ -20,19 +20,23 @@ var (
 // While this does return a logger, it should not be used for additional retrievals of the logger. Use GetLogger()
 func StartLogger() zerolog.Logger {
 	logDir = snek.GetString("logger.directory")
-	if err := os.MkdirAll(logDir, 0755); err != nil {
+	if !strings.HasSuffix(logDir, "/") {
+		logDir = logDir + "/"
+	}
+	if err := os.MkdirAll(logDir, os.ModePerm); err != nil {
 		println("cannot create log directory: " + logDir + "(" + err.Error() + ")")
 		os.Exit(1)
 	}
 
-	tnow := "HellPot"
+	logFileName := "HellPot"
 
 	if snek.GetBool("logger.use_date_filename") {
-		tnow = strings.Replace(time.Now().Format(time.RFC822), " ", "_", -1)
-		tnow = strings.Replace(tnow, ":", "-", -1)
+		tn := strings.Replace(time.Now().Format(time.RFC822), " ", "_", -1)
+		tn = strings.Replace(logFileName, ":", "-", -1)
+		logFileName = logFileName + "_" + tn
 	}
 
-	CurrentLogFile = logDir + tnow + ".log"
+	CurrentLogFile = logDir + logFileName + ".log"
 
 	if logFile, err = os.OpenFile(CurrentLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); err != nil {
 		println("cannot create log file: " + err.Error())
