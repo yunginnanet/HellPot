@@ -62,7 +62,7 @@ func (h *Heffalump) WriteHell(bw *bufio.Writer) (int64, error) {
 	buf := h.getBuffer()
 	defer h.putBuffer(buf)
 
-	if _, err = io.WriteString(bw, "<HTML>\n<BODY>\n"); err != nil {
+	if _, err = bw.WriteString("<HTML>\n<BODY>\n"); err != nil {
 		return n, err
 	}
 

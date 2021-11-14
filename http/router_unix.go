@@ -24,7 +24,7 @@ func listenOnUnixSocket(addr string, r *router.Router) error {
 		_ = syscall.Unlink(addr)
 		// Before we set socket permissions, we want to make sure only the user HellPot is running under
 		// has permission to the socket.
-		oldmask := syscall.Umask(0077)
+		oldmask := syscall.Umask(0o077)
 		unixListener, err = net.ListenUnix("unix", unixAddr)
 		syscall.Umask(oldmask)
 		if err == nil {

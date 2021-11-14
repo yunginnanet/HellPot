@@ -3,7 +3,7 @@ package config
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"runtime"
 	"strconv"
@@ -34,7 +34,7 @@ func writeConfig() {
 	}
 
 	if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
-		if err = os.MkdirAll(prefConfigLocation, 0755); err != nil {
+		if err = os.MkdirAll(prefConfigLocation, 0o755); err != nil {
 			println("error writing new config: " + err.Error())
 			os.Exit(1)
 		}
@@ -136,11 +136,8 @@ func setConfigFileLocations() {
 	configLocations = append(configLocations, "./")
 
 	if runtime.GOOS != "windows" {
-		configLocations = append(configLocations, prefConfigLocation)
-		configLocations = append(configLocations, "/etc/"+Title+"/")
-		configLocations = append(configLocations, "../")
-		configLocations = append(configLocations, "../../")
-
+		configLocations = append(configLocations,
+			prefConfigLocation, "/etc/"+Title+"/", "../", "../../")
 	}
 }
 
@@ -149,7 +146,7 @@ func loadCustomConfig(path string) {
 		println("Error opening specified config file: " + path)
 		panic("config file open fatal error: " + err.Error())
 	}
-	buf, err := ioutil.ReadAll(f)
+	buf, err := io.ReadAll(f)
 	err2 := snek.ReadConfig(bytes.NewBuffer(buf))
 	switch {
 	case err != nil:
@@ -183,9 +180,7 @@ func argParse() {
 			noColorForce = true
 		case "--banner":
 			BannerOnly = true
-		case "--config":
-			fallthrough
-		case "-c":
+		case "-c", "--config":
 			if len(os.Args) <= i-1 {
 				panic("syntax error! expected file after -c")
 			}

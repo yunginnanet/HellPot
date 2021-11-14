@@ -21,7 +21,7 @@ var (
 func StartLogger() zerolog.Logger {
 	logDir = snek.GetString("logger.directory")
 	if !strings.HasSuffix(logDir, "/") {
-		logDir = logDir + "/"
+		logDir += "/"
 	}
 	if err := os.MkdirAll(logDir, os.ModePerm); err != nil {
 		println("cannot create log directory: " + logDir + "(" + err.Error() + ")")
@@ -31,14 +31,14 @@ func StartLogger() zerolog.Logger {
 	logFileName := "HellPot"
 
 	if snek.GetBool("logger.use_date_filename") {
-		tn := strings.Replace(time.Now().Format(time.RFC822), " ", "_", -1)
-		tn = strings.Replace(logFileName, ":", "-", -1)
+		tn := strings.ReplaceAll(time.Now().Format(time.RFC822), " ", "_")
+		tn = strings.ReplaceAll(logFileName, ":", "-")
 		logFileName = logFileName + "_" + tn
 	}
 
 	CurrentLogFile = logDir + logFileName + ".log"
 
-	if logFile, err = os.OpenFile(CurrentLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); err != nil {
+	if logFile, err = os.OpenFile(CurrentLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666); err != nil {
 		println("cannot create log file: " + err.Error())
 		os.Exit(1)
 	}

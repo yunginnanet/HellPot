@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
-	"io/ioutil"
+	"io"
 )
 
 func gz(data []byte) string {
@@ -12,7 +12,7 @@ func gz(data []byte) string {
 	if err != nil {
 		panic(err)
 	}
-	out, err := ioutil.ReadAll(gz)
+	out, err := io.ReadAll(gz)
 	if err != nil {
 		panic(err)
 	}

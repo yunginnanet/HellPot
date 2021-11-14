@@ -7,7 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strings"
 
 	"github.com/yunginnanet/HellPot/config"
@@ -43,13 +43,13 @@ func process(in string) (s string) {
 	for n := 1; n < 5; n++ {
 		s = cproc(s, fmt.Sprintf("%d", n))
 	}
-	s = strings.Replace(s, "$maj", maj, -1)
-	s = strings.Replace(s, "$min", min, -1)
+	s = strings.ReplaceAll(s, "$maj", maj)
+	s = strings.ReplaceAll(s, "$min", min)
 	return
 }
 func gz(data []byte) string {
 	gz, err1 := gzip.NewReader(bytes.NewReader(data))
-	out, err2 := ioutil.ReadAll(gz)
+	out, err2 := io.ReadAll(gz)
 	if err1 != nil || err2 != nil {
 		bannerFail(err1, err2)
 	}
