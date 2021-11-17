@@ -4,6 +4,8 @@ go 1.16
 
 require (
 	github.com/fasthttp/router v1.4.3
+	github.com/rs/zerolog v1.22.0
+	github.com/spf13/viper v1.9.0
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/rs/zerolog v1.26.0
 	github.com/spf13/afero v1.2.2 // indirect
@@ -13,6 +15,4 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/valyala/fasthttp v1.30.0
-	gopkg.in/ini.v1 v1.53.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
