@@ -1,11 +1,5 @@
 package config
 
-import (
-	"os"
-
-	"github.com/spf13/viper"
-)
-
 const (
 	// Version roughly represents the applications current version.
 	Version = "0.3"
@@ -51,29 +45,4 @@ var (
 var (
 	// FakeServerName is our configured value for the "Server: " response header when serving HTTP clients
 	FakeServerName string
-)
-
-var (
-	// Filename returns the current location of our toml config file.
-	Filename string
-)
-
-var (
-	f   *os.File
-	err error
-)
-
-var (
-	noColorForce    = false
-	customconfig    = false
-	home            string
-	configLocations []string
-)
-
-var (
-	// Debug is our global debug toggle
-	Debug bool
-
-	prefConfigLocation string
-	snek               *viper.Viper
 )
