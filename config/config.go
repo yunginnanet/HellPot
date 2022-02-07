@@ -12,6 +12,25 @@ import (
 	"github.com/spf13/viper"
 )
 
+// generic vars
+var (
+	f                  *os.File
+	err                error
+	noColorForce       = false
+	customconfig       = false
+	home               string
+	prefConfigLocation string
+	snek               *viper.Viper
+)
+
+// exported generic vars
+var (
+	// Debug is the value of our debug on/off toggle as per the current configuration.
+	Debug              bool
+	// Filename returns the current location of our toml config file.
+	Filename string
+)
+
 func init() {
 	if home, err = os.UserHomeDir(); err != nil {
 		panic(err)
@@ -61,10 +80,9 @@ func Init() {
 		return
 	}
 
-	setConfigFileLocations()
 	setDefaults()
 
-	for _, loc := range configLocations {
+	for _, loc := range getConfigPaths() {
 		snek.AddConfigPath(loc)
 	}
 
@@ -79,66 +97,15 @@ func Init() {
 	associateExportedVariables()
 }
 
-func setDefaults() {
-	var (
-		configSections = []string{"logger", "http", "performance", "deception", "ssh"}
-		deflogdir      = home + "/.config/" + Title + "/logs/"
-		defNoColor     = false
-	)
-
-	if runtime.GOOS == "windows" {
-		deflogdir = "logs/"
-		defNoColor = true
-	}
-
-	Opt := make(map[string]map[string]interface{})
-
-	Opt["logger"] = map[string]interface{}{
-		"debug":             true,
-		"directory":         deflogdir,
-		"nocolor":           defNoColor,
-		"use_date_filename": true,
-	}
-	Opt["http"] = map[string]interface{}{
-		"use_unix_socket":         false,
-		"unix_socket_path":        "/var/run/hellpot",
-		"unix_socket_permissions": "0666",
-		"bind_addr":               "127.0.0.1",
-		"bind_port":               "8080",
-		"paths": []string{
-			"wp-login.php",
-			"wp-login",
-		},
-	}
-	Opt["performance"] = map[string]interface{}{
-		"restrict_concurrency": false,
-		"max_workers":          256,
-	}
-	Opt["deception"] = map[string]interface{}{
-		"server_name": "nginx",
-	}
-
-	for _, def := range configSections {
-		snek.SetDefault(def, Opt[def])
-	}
-
-	if GenConfig {
-		if err = snek.SafeWriteConfigAs("./config.toml"); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		}
-		os.Exit(0)
-	}
-
-}
-
-func setConfigFileLocations() {
-	configLocations = append(configLocations, "./")
+func getConfigPaths() (paths []string) {
+	paths = append(paths, "./")
 
 	if runtime.GOOS != "windows" {
-		configLocations = append(configLocations,
+		paths = append(paths,
 			prefConfigLocation, "/etc/"+Title+"/", "../", "../../")
 	}
+
+	return
 }
 
 func loadCustomConfig(path string) {
@@ -157,38 +124,6 @@ func loadCustomConfig(path string) {
 		break
 	}
 	customconfig = true
-}
-
-func printUsage() {
-	println("\n" + Title + " v" + Version + " Usage\n")
-	println("-c <config.toml> - Specify config file")
-	println("--nocolor - disable color and banner ")
-	println("--banner - show banner + version and exit")
-	println("--genconfig - write default config to 'default.toml' then exit")
-	os.Exit(0)
-}
-
-// TODO: should probably just make a proper CLI with flags or something
-func argParse() {
-	for i, arg := range os.Args {
-		switch arg {
-		case "-h":
-			printUsage()
-		case "--genconfig":
-			GenConfig = true
-		case "--nocolor":
-			noColorForce = true
-		case "--banner":
-			BannerOnly = true
-		case "-c", "--config":
-			if len(os.Args) <= i-1 {
-				panic("syntax error! expected file after -c")
-			}
-			loadCustomConfig(os.Args[i+1])
-		default:
-			continue
-		}
-	}
 }
 
 func processOpts() {

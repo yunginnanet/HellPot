@@ -93,7 +93,7 @@ func getSrv(r *router.Router) fasthttp.Server {
 		DisableKeepalive: true,
 
 		Handler: r.Handler,
-		Logger: log,
+		Logger:  log,
 	}
 }
 
@@ -104,6 +104,7 @@ func Serve() error {
 
 	r := router.New()
 	r.GET("/robots.txt", robotsTXT)
+
 	for _, p := range config.Paths {
 		r.GET(fmt.Sprintf("/%s", p), hellPot)
 	}
