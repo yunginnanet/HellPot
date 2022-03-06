@@ -25,8 +25,10 @@ var (
 
 // exported generic vars
 var (
-	// Debug is the value of our debug on/off toggle as per the current configuration.
-	Debug              bool
+	// Trace is the value of our trace (extra verbose)  on/off toggle as per the current configuration.
+	Trace bool
+	// Debug is the value of our debug (verbose) on/off toggle as per the current configuration.
+	Debug bool
 	// Filename returns the current location of our toml config file.
 	Filename string
 )
@@ -142,6 +144,7 @@ func processOpts() {
 	boolOpt := map[string]*bool{
 		"http.use_unix_socket":             &UseUnixSocket,
 		"logger.debug":                     &Debug,
+		"logger.trace":                     &Trace,
 		"performance.restrict_concurrency": &RestrictConcurrency,
 		"logger.nocolor":                   &NoColor,
 	}
@@ -179,7 +182,10 @@ func associateExportedVariables() {
 		}
 	}
 
-	if Debug {
+	if Debug || forceDebug {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
+	if Trace || forceTrace {
+		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	}
 }

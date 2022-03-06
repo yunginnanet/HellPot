@@ -44,7 +44,7 @@ func hellPot(ctx *fasthttp.RequestCtx) {
 			wn, err = heffalump.DefaultHeffalump.WriteHell(bw)
 			n += wn
 			if err != nil {
-				slog.Debug().Err(err).Msg("END_ON_ERR")
+				slog.Trace().Err(err).Msg("END_ON_ERR")
 				break
 			}
 		}

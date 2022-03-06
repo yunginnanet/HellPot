@@ -23,6 +23,10 @@ func argParse() {
 			printUsage()
 		case "--genconfig":
 			GenConfig = true
+		case "--debug", "-v",
+			forceDebug = true
+		case "--trace", "-vv",
+			forceTrace = true
 		case "--nocolor":
 			noColorForce = true
 		case "--banner":
