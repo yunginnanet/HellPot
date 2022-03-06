@@ -15,6 +15,11 @@ func printUsage() {
 	os.Exit(0)
 }
 
+var (
+	forceDebug = false
+	forceTrace = false
+)
+
 // TODO: should probably just make a proper CLI with flags or something
 func argParse() {
 	for i, arg := range os.Args {
@@ -23,9 +28,9 @@ func argParse() {
 			printUsage()
 		case "--genconfig":
 			GenConfig = true
-		case "--debug", "-v",
+		case "--debug", "-v":
 			forceDebug = true
-		case "--trace", "-vv",
+		case "--trace", "-vv":
 			forceTrace = true
 		case "--nocolor":
 			noColorForce = true
