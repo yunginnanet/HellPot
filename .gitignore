@@ -1,7 +1,7 @@
 go.sum
 /dist
-/art
-.idea
+art
 HellPot
-config.toml*
-config.alt*
+.idea/
+*.save
+*.toml
