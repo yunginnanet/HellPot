@@ -15,6 +15,7 @@ var (
 var defOpts = map[string]map[string]interface{}{
 	"logger": {
 		"debug":             true,
+		"trace":             false,
 		"directory":         deflogdir,
 		"nocolor":           defNoColor,
 		"use_date_filename": true,
