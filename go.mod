@@ -6,5 +6,5 @@ require (
 	github.com/fasthttp/router v1.4.6
 	github.com/rs/zerolog v1.26.1
 	github.com/spf13/viper v1.10.1
-	github.com/valyala/fasthttp v1.33.0
+	github.com/valyala/fasthttp v1.34.0
 )
