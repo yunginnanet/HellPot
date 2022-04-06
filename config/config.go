@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 
@@ -34,14 +35,12 @@ var (
 )
 
 func init() {
-	if home, err = os.UserHomeDir(); err != nil {
-		panic(err)
-	}
 	prefConfigLocation = home + "/.config/" + Title
 	snek = viper.New()
 }
 
 func writeConfig() {
+	//goland:noinspection GoBoolExpressions
 	if runtime.GOOS == "windows" {
 		newconfig := "hellpot-config"
 		snek.SetConfigName(newconfig)
@@ -63,7 +62,7 @@ func writeConfig() {
 
 	newconfig := prefConfigLocation + "/" + "config.toml"
 	if err = snek.SafeWriteConfigAs(newconfig); err != nil {
-		fmt.Println(err.Error())
+		fmt.Println("Failed to write new configuration file: " + err.Error())
 		os.Exit(1)
 	}
 
@@ -89,6 +88,8 @@ func Init() {
 	}
 
 	if err = snek.MergeInConfig(); err != nil {
+		println("Error reading configuration file: " + err.Error())
+		println("Writing new configuration file...")
 		writeConfig()
 	}
 
@@ -101,30 +102,48 @@ func Init() {
 
 func getConfigPaths() (paths []string) {
 	paths = append(paths, "./")
-
+	//goland:noinspection GoBoolExpressions
 	if runtime.GOOS != "windows" {
 		paths = append(paths,
 			prefConfigLocation, "/etc/"+Title+"/", "../", "../../")
 	}
-
 	return
 }
 
 func loadCustomConfig(path string) {
 	if f, err = os.Open(path); err != nil {
 		println("Error opening specified config file: " + path)
-		panic("config file open fatal error: " + err.Error())
+		println(err.Error())
+		os.Exit(1)
 	}
-	buf, err := io.ReadAll(f)
+
+	Filename, _ = filepath.Abs(path)
+
+	if len(Filename) < 1 {
+		Filename = path
+	}
+
+	defer func(f *os.File) {
+		fcerr := f.Close()
+		if fcerr != nil {
+			fmt.Println("failed to close file handler for config file: ", fcerr.Error())
+		}
+	}(f)
+
+	buf, err1 := io.ReadAll(f)
 	err2 := snek.ReadConfig(bytes.NewBuffer(buf))
+
 	switch {
-	case err != nil:
-		fmt.Println("config file read fatal error: ", err.Error())
+	case err1 != nil:
+		fmt.Println("config file read fatal error during i/o: ", err1.Error())
+		os.Exit(1)
 	case err2 != nil:
-		fmt.Println("config file read fatal error: ", err2.Error())
+		fmt.Println("config file read fatal error during parse: ", err2.Error())
+		os.Exit(1)
 	default:
 		break
 	}
+
 	customconfig = true
 }
 
@@ -142,10 +161,10 @@ func processOpts() {
 	}
 	// bool options and their exported variables
 	boolOpt := map[string]*bool{
+		"performance.restrict_concurrency": &RestrictConcurrency,
 		"http.use_unix_socket":             &UseUnixSocket,
 		"logger.debug":                     &Debug,
 		"logger.trace":                     &Trace,
-		"performance.restrict_concurrency": &RestrictConcurrency,
 		"logger.nocolor":                   &NoColor,
 		"http.router.makerobots":           &MakeRobots,
 		"http.router.catchall":             &CatchAll,

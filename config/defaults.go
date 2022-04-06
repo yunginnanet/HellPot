@@ -6,9 +6,16 @@ import (
 	"runtime"
 )
 
+func init() {
+	if home, err = os.UserHomeDir(); err != nil {
+		panic(err)
+	}
+	defOpts["logger"]["directory"] = home + "/.config/" + Title + "/logs/"
+
+}
+
 var (
 	configSections = []string{"logger", "http", "performance", "deception", "ssh"}
-	deflogdir      = home + "/.config/" + Title + "/logs/"
 	defNoColor     = false
 )
 
@@ -16,7 +23,6 @@ var defOpts = map[string]map[string]interface{}{
 	"logger": {
 		"debug":             true,
 		"trace":             false,
-		"directory":         deflogdir,
 		"nocolor":           defNoColor,
 		"use_date_filename": true,
 	},
@@ -45,8 +51,9 @@ var defOpts = map[string]map[string]interface{}{
 }
 
 func setDefaults() {
+	//goland:noinspection GoBoolExpressions
 	if runtime.GOOS == "windows" {
-		deflogdir = "logs/"
+		snek.SetDefault("logger.directory", "./logs/")
 		defNoColor = true
 	}
 
