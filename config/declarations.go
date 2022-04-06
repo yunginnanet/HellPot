@@ -2,7 +2,7 @@ package config
 
 const (
 	// Version roughly represents the applications current version.
-	Version = "0.3"
+	Version = "0.3.1"
 	// Title is the name of the application used throughout the configuration process.
 	Title = "HellPot"
 )

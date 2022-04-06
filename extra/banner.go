@@ -1,25 +1,18 @@
 package extra
 
 import (
-	"bytes"
-	"compress/gzip"
 	crip "crypto/rand"
-	"encoding/base64"
 	"encoding/binary"
 	"fmt"
-	"io"
 	"strings"
+	"time"
+
+	"git.tcp.direct/kayos/common/squish"
 
 	"github.com/yunginnanet/HellPot/config"
 )
 
-const hellpot = "H4sIAAAAAAACA8VXvW7bQAze9QpZOGQUbNXnJBDyAh27Gx1c10icRHLRKgUCdPDgQavOgB/QT1JZ9P3oRJ5OTowAjnE5feSR30fy5Ohqdj25nyYZ4EJkh/22Xn457h325WEvbYTZLq9m4u60nWTHP7AAO+UNaneuR8aUOqTxdAIDXAIv1cJE5TfbNVDNFZ8cScxWfUqOb52GMU6yiKAWfRjDisqRPEV6JautTN4WYONXXBPKCjAcGZ4qkMTRmpUtJrqJ+hy18GRskq4ZyQoqcdn1VH82uCf0YyHwcUVFJx0JTRFonvvMXJr9Ap1vyUtrlGQKVXJiVkHisFm0FRvSZdLRoyVvheUHKOMRhBpCR1q+uaRdws5A8RvSFTFI2DPttu2ph6N2R7HHiexmbEbuhue+WwykqO2ZS4VVkcSS0oLSEVAPoY8zhrpx7SunW5NWf/uuh5Kv5vMtpfWUoqNbfMHMWw1bj7SNMxpdR51z+iJjhSJqDbvQXByAAXBs+jqeCiWMDzxx9y5Oh/qQFtkfLK9UvXD69r3g9Qzeqj1lzpU0UB24BBsVE+WneezrG+ZVOTgAty884kPIbUILXWmhA+TrCM1kRb8YBeV/IWu6D7gLN7RaGAE9v3ioWBUMoRCqUn+lTjQTA1qQLqmLWInE0gEg3KGXxJNXhfmrrK6z+ZOicVQvpri5yk2DNKvmK4pgpl08rIpRsfg1+rn6vVwU4+f52/rP+Ovy5eXbumjg3xGMwdXox9cfo8U6G7+95g+rPJ/ny6KN/ycmsZjG4iYWt3Eq4nQSp9M4vYnT+t8k+g/TQ9elQBAAAA=="
-
-func b64d(str string) []byte {
-	var data []byte
-	data, _ = base64.StdEncoding.DecodeString(str)
-	return data
-}
+const hellpot = "H4sIAAAAAAACA8VXvW7bQAze9QpZOGQUZNXntBD6Ahm7Gx1cx0jdRnKRKAUCdPDgQavOgB/QTxLZ1P3oRJ5Obo0CtnE5feSR30fylOhmfjv9PEtzwIXIj4dds/xw2jsequNB2gizXd3Mxad2O81PX7AAe+UNGneuR8aUOuTsqQUDXAMv1cJE5Tfbn6GaKz45kpid+lQc3zoNY5zmEUEt+jCGNZUjeYr0StZYmbwtwNavuCaUFWA8MjxVIImjNas6TPQT9Tnq4MnYJF0zkhVU4rLvqflscU/ox0Lg45qKTjoSmiLQPA+ZuTT7BbrckpfWKMkUquTErIPEYbPoKjamy6SjR0feGssPUMYTCDWEnrR8c0m7hJ2B4jekK2KUsBfa7bpTD0ftnmKPE9nN2IzcLc99vxhIUbszlwqrJoklpQWlI6AeQh9nDHXj2ldOvyat/vZdDxVfzZdbSuspRUe/+IKZtxq2GWlbZzS6jnrnDEXGCkXUGnahuTgAA+DY9HU8FUoYH3ji/q84HetDWmT/Y3ml6oX21/eCNzB46+6UuVTSQHXgGmzUTJT/zeNQ3zCvysEBuH3hER9CbhNa6FoLHSBfT2gmK/rFKCj/K1nTfcBduKHVwgjo+Y+HilXBEAqhKg1X6lQzMaIF6ZK6ipVILR0Awh16SWy9KsxvZXWbL34oGpNmMcPNdYFmiE40+qV9cg4Logjm2uXjukzK5a/kYf28WpaTn4u3zcvkfvX09GVTnuFfEYzBNujvr9+S5SafvL0Wj+uiWBSrsov/I6axmMXiLhYf40zE2TTOZnF2F2fNn2n0DpcvBxhQEAAA"
 
 func rc(s []string) string {
 	return strings.TrimSpace(s[ru()%uint32(len(s))])
@@ -29,7 +22,8 @@ func process(in string) (s string) {
 	var v = strings.Split(config.Version, "")
 	maj := v[0]
 	min := v[2]
-	sp := strings.Split(gz(b64d(in)), "|")
+	smin := v[4]
+	sp := strings.Split(squish.UnpackStr(in), "|")
 	s = sp[0]
 	c := strings.Split(sp[1], ",")
 	cproc := func(in, num string) (inr string) {
@@ -45,15 +39,8 @@ func process(in string) (s string) {
 	}
 	s = strings.ReplaceAll(s, "$maj", maj)
 	s = strings.ReplaceAll(s, "$min", min)
+	s = strings.ReplaceAll(s, "$smin", smin)
 	return
-}
-func gz(data []byte) string {
-	gz, err1 := gzip.NewReader(bytes.NewReader(data))
-	out, err2 := io.ReadAll(gz)
-	if err1 != nil || err2 != nil {
-		bannerFail(err1, err2)
-	}
-	return string(out)
 }
 
 func ru() uint32 {
@@ -66,5 +53,7 @@ func ru() uint32 {
 
 // PrintBanner prints our entropic banner
 func PrintBanner() {
+	time.Sleep(5 * time.Millisecond)
+	defer time.Sleep(5 * time.Millisecond)
 	println("\n" + process(hellpot) + "\n\n")
 }

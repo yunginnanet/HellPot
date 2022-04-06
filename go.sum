@@ -45,6 +45,10 @@ cloud.google.com/go/storage v1.6.0/go.mod h1:N7U0C8pVQ/+NIKOBQyamJIeKQKkZ+mxpohl
 cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RXyy7KQOVs=
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
+git.tcp.direct/kayos/common/entropy v0.0.0-20220210125455-40e3d2190a52 h1:W0cnyiO2VA/QvtxlAjnL2SKUgY7K5waOSFIJgKVKNXA=
+git.tcp.direct/kayos/common/entropy v0.0.0-20220210125455-40e3d2190a52/go.mod h1:TM+NcOy0W2vfTkNIXMhcnJKdDW6YmvRRXNcvh2jCgEA=
+git.tcp.direct/kayos/common/squish v0.0.0-20220210125455-40e3d2190a52 h1:lpyyjVo/je2oSNp+ecb13oHtDDWELmsxm8WA5XZjFGw=
+git.tcp.direct/kayos/common/squish v0.0.0-20220210125455-40e3d2190a52/go.mod h1:QZ5ZpL7EsqjteMmv5C5zNMlttUpYes2RrA1ILI/Ql2w=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
