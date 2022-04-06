@@ -14,6 +14,11 @@ var (
 	GenConfig = false
 	// NoColor when true will disable the banner and any colored console output.
 	NoColor bool
+	// MakeRobots when false will not respond to requests for robots.txt.
+	MakeRobots bool
+	// CatchAll when true will cause HellPot to respond to all paths.
+	// Note that this will override MakeRobots.
+	CatchAll bool
 )
 
 // "http"

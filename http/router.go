@@ -25,11 +25,20 @@ func getRealRemote(ctx *fasthttp.RequestCtx) string {
 }
 
 func hellPot(ctx *fasthttp.RequestCtx) {
+	path, pok := ctx.UserValue("path").(string)
+	if len(path) < 1 || !pok {
+		path = "/"
+	}
+
 	remoteAddr := getRealRemote(ctx)
 	slog := log.With().
 		Str("USERAGENT", string(ctx.UserAgent())).
 		Str("REMOTE_ADDR", remoteAddr).
 		Interface("URL", string(ctx.RequestURI())).Logger()
+
+	if config.Trace {
+		slog = slog.With().Str("caller", path).Logger()
+	}
 
 	slog.Info().Msg("NEW")
 
@@ -103,14 +112,25 @@ func Serve() error {
 	l := config.HTTPBind + ":" + config.HTTPPort
 
 	r := router.New()
-	r.GET("/robots.txt", robotsTXT)
 
-	for _, p := range config.Paths {
-		r.GET(fmt.Sprintf("/%s", p), hellPot)
+	if config.MakeRobots && !config.CatchAll {
+		r.GET("/robots.txt", robotsTXT)
+	}
+
+	if !config.CatchAll {
+		for _, p := range config.Paths {
+			log.Trace().Str("caller", "router").Msg(p)
+			r.GET(fmt.Sprintf("/%s", p), hellPot)
+		}
+	} else {
+		log.Trace().Msg("Catch-All mode enabled...")
+		r.GET("/", hellPot)
+		r.GET("/{path}", hellPot)
 	}
 
 	srv := getSrv(r)
 
+	//goland:noinspection GoBoolExpressions
 	if !config.UseUnixSocket || runtime.GOOS == "windows" {
 		log.Info().Str("caller", l).Msg("Listening and serving HTTP...")
 		return srv.ListenAndServe(l)
