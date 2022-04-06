@@ -138,7 +138,7 @@ func processOpts() {
 	}
 	// string slice options and their exported variables
 	strSliceOpt := map[string]*[]string{
-		"http.paths": &Paths,
+		"http.router.paths": &Paths,
 	}
 	// bool options and their exported variables
 	boolOpt := map[string]*bool{
@@ -147,6 +147,8 @@ func processOpts() {
 		"logger.trace":                     &Trace,
 		"performance.restrict_concurrency": &RestrictConcurrency,
 		"logger.nocolor":                   &NoColor,
+		"http.router.makerobots":           &MakeRobots,
+		"http.router.catchall":             &CatchAll,
 	}
 	// integer options and their exported variables
 	intOpt := map[string]*int{
@@ -182,10 +184,14 @@ func associateExportedVariables() {
 		}
 	}
 
+	// We set exported variables here so that it tracks when accessed from other packages.
+
 	if Debug || forceDebug {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		Debug = true
 	}
 	if Trace || forceTrace {
 		zerolog.SetGlobalLevel(zerolog.TraceLevel)
+		Trace = true
 	}
 }

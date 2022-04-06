@@ -26,9 +26,13 @@ var defOpts = map[string]map[string]interface{}{
 		"unix_socket_permissions": "0666",
 		"bind_addr":               "127.0.0.1",
 		"bind_port":               "8080",
-		"paths": []string{
-			"wp-login.php",
-			"wp-login",
+		"router": map[string]interface{}{
+			"catchall":   false,
+			"makerobots": true,
+			"paths": []string{
+				"wp-login.php",
+				"wp-login",
+			},
 		},
 	},
 	"performance": {
