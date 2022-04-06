@@ -60,38 +60,48 @@ In the event of a missing configuration file, HellPot will attempt to place it's
 
 ## Example Config (toml) 
    
-```  
+```toml
+[deception]
+  # Used as "Server" HTTP header. Note that reverse proxies may hide this.
+  server_name = "nginx"
+
 [http]
   # TCP Listener (default)
   bind_addr = "127.0.0.1"
   bind_port = "8080"
-  paths = ["wp-login.php","wp-login"]
 
   # Unix Socket Listener (will override default)
+  unix_socket_path = "/var/run/hellpot"
+  unix_socket_permissions = "0666"
   use_unix_socket = false
-  unix_socket = "/var/run/hellpot"
+
+  [http.router]
+    # Toggling this to true will cause all GET requests to match. Forces makerobots = false.
+    catchall = false
+    # Toggling this to false will prevent creation of robots.txt handler.
+    makerobots = true
+    # Handlers will be created for these paths, as well as robots.txt entries. Only valid if catchall = false.
+    paths = ["wp-login.php", "wp-login"]
 
 [logger]
+  # verbose (-v)
   debug = true
+  # extra verbose (-vv)
+  trace = false
   directory = "/home/kayos/.config/HellPot/logs/"
   nocolor = false
   use_date_filename = true
 
 [performance]
   # max_workers is only valid if restrict_concurrency is true
-  restrict_concurrency = false
   max_workers = 256
-  
-[deception]
-  # Used as "Server: " header (if not proxied)
-  server_name = "nginx"
-
+  restrict_concurrency = false
 ```
   
 
 ## Example Web Server Config (nginx)  
     
-```          
+```
 location '/robots.txt' {
 	proxy_set_header Host $host;
 	proxy_set_header X-Real-IP $remote_addr;
