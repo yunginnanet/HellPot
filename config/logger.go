@@ -38,6 +38,7 @@ func StartLogger() zerolog.Logger {
 
 	CurrentLogFile = logDir + logFileName + ".log"
 
+	/* #nosec */
 	if logFile, err = os.OpenFile(CurrentLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666); err != nil {
 		println("cannot create log file: " + err.Error())
 		os.Exit(1)
