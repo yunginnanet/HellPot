@@ -1,4 +1,4 @@
-name: Go
+name: Vibe Check
 
 on:
   push:
@@ -7,19 +7,18 @@ on:
     branches: [ master ]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.18
-
-      - name: Build
-        run: go build -v ./...
-
-      - name: Vet
+      - name: go vet -v ./...
         run: go vet -v ./...
+      - name: gosec ./...
+        uses: securego/gosec@master
+          args: ./...
+      - name: go build -v ./...
+        run: go build -v ./...

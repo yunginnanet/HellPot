@@ -32,7 +32,7 @@ func StartLogger() zerolog.Logger {
 
 	if snek.GetBool("logger.use_date_filename") {
 		tn := strings.ReplaceAll(time.Now().Format(time.RFC822), " ", "_")
-		tn = strings.ReplaceAll(logFileName, ":", "-")
+		tn = strings.ReplaceAll(tn, ":", "-")
 		logFileName = logFileName + "_" + tn
 	}
 
