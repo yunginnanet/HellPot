@@ -54,7 +54,7 @@ func writeConfig() {
 	}
 
 	if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
-		if err = os.MkdirAll(prefConfigLocation, 0o755); err != nil {
+		if err = os.MkdirAll(prefConfigLocation, 0o750); err != nil {
 			println("error writing new config: " + err.Error())
 			os.Exit(1)
 		}
@@ -111,6 +111,7 @@ func getConfigPaths() (paths []string) {
 }
 
 func loadCustomConfig(path string) {
+	/* #nosec */
 	if f, err = os.Open(path); err != nil {
 		println("Error opening specified config file: " + path)
 		println(err.Error())

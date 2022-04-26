@@ -95,6 +95,8 @@ func (mm MarkovMap) Get(w1, w2 string) string {
 		return ""
 	}
 
+	// We don't care about cryptographically sound entropy here, ignore gosec G404.
+	/* #nosec */
 	r := rand.Intn(len(suffix))
 	return suffix[r]
 }

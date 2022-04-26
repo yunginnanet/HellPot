@@ -32,12 +32,13 @@ func StartLogger() zerolog.Logger {
 
 	if snek.GetBool("logger.use_date_filename") {
 		tn := strings.ReplaceAll(time.Now().Format(time.RFC822), " ", "_")
-		tn = strings.ReplaceAll(logFileName, ":", "-")
+		tn = strings.ReplaceAll(tn, ":", "-")
 		logFileName = logFileName + "_" + tn
 	}
 
 	CurrentLogFile = logDir + logFileName + ".log"
 
+	/* #nosec */
 	if logFile, err = os.OpenFile(CurrentLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666); err != nil {
 		println("cannot create log file: " + err.Error())
 		os.Exit(1)

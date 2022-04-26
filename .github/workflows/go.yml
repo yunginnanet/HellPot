@@ -1,25 +1,26 @@
-name: Go
+name: Vibe Check
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, development ]
   pull_request:
     branches: [ master ]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.18
-
-      - name: Build
-        run: go build -v ./...
-
-      - name: Vet
+      - name: go vet -v ./...
         run: go vet -v ./...
+      - name: gosec ./...
+        run: | # https://github.com/securego/gosec/issues/469
+          export PATH=$PATH:$(go env GOPATH)/bin
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          gosec ./...
+      - name: go build -v ./...
+        run: go build -v ./...
