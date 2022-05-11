@@ -7,6 +7,7 @@ import (
 )
 
 func init() {
+	var err error
 	if home, err = os.UserHomeDir(); err != nil {
 		panic(err)
 	}
@@ -66,7 +67,7 @@ func setDefaults() {
 	}
 
 	if GenConfig {
-		if err = snek.SafeWriteConfigAs("./config.toml"); err != nil {
+		if err := snek.SafeWriteConfigAs("./config.toml"); err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}

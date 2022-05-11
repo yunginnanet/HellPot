@@ -15,8 +15,6 @@ import (
 
 // generic vars
 var (
-	f                  *os.File
-	err                error
 	noColorForce       = false
 	customconfig       = false
 	home               string
@@ -39,34 +37,36 @@ func init() {
 	snek = viper.New()
 }
 
+func windowsConfig() {
+	newconfig := "hellpot-config"
+	snek.SetConfigName(newconfig)
+	if err := snek.MergeInConfig(); err == nil {
+		return
+	}
+	if err := snek.SafeWriteConfigAs(newconfig + ".toml"); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	return
+}
+
 func writeConfig() {
 	//goland:noinspection GoBoolExpressions
 	if runtime.GOOS == "windows" {
-		newconfig := "hellpot-config"
-		snek.SetConfigName(newconfig)
-		if err = snek.MergeInConfig(); err != nil {
-			if err = snek.SafeWriteConfigAs(newconfig + ".toml"); err != nil {
-				fmt.Println(err.Error())
-				os.Exit(1)
-			}
-		}
+		windowsConfig()
 		return
 	}
-
 	if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
 		if err = os.MkdirAll(prefConfigLocation, 0o750); err != nil {
 			println("error writing new config: " + err.Error())
 			os.Exit(1)
 		}
 	}
-
-	newconfig := prefConfigLocation + "/" + "config.toml"
-	if err = snek.SafeWriteConfigAs(newconfig); err != nil {
+	Filename = prefConfigLocation + "/" + "config.toml"
+	if err := snek.SafeWriteConfigAs(Filename); err != nil {
 		fmt.Println("Failed to write new configuration file: " + err.Error())
 		os.Exit(1)
 	}
-
-	Filename = newconfig
 }
 
 // Init will initialize our toml configuration engine and define our default configuration values which can be written to a new configuration file if desired
@@ -87,7 +87,7 @@ func Init() {
 		snek.AddConfigPath(loc)
 	}
 
-	if err = snek.MergeInConfig(); err != nil {
+	if err := snek.MergeInConfig(); err != nil {
 		println("Error reading configuration file: " + err.Error())
 		println("Writing new configuration file...")
 		writeConfig()
@@ -112,7 +112,8 @@ func getConfigPaths() (paths []string) {
 
 func loadCustomConfig(path string) {
 	/* #nosec */
-	if f, err = os.Open(path); err != nil {
+	cf, err := os.Open(path)
+	if err != nil {
 		println("Error opening specified config file: " + path)
 		println(err.Error())
 		os.Exit(1)
@@ -125,13 +126,12 @@ func loadCustomConfig(path string) {
 	}
 
 	defer func(f *os.File) {
-		fcerr := f.Close()
-		if fcerr != nil {
+		if fcerr := f.Close(); fcerr != nil {
 			fmt.Println("failed to close file handler for config file: ", fcerr.Error())
 		}
-	}(f)
+	}(cf)
 
-	buf, err1 := io.ReadAll(f)
+	buf, err1 := io.ReadAll(cf)
 	err2 := snek.ReadConfig(bytes.NewBuffer(buf))
 
 	switch {
