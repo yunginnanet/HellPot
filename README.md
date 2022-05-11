@@ -8,7 +8,7 @@ HellPot is an endless honeypot based on [Heffalump](https://github.com/carlmjohn
 
 Notably it implements a [toml configuration file](https://github.com/spf13/viper), has [JSON logging](https://github.com/rs/zerolog), and comes with significant performance gains.
   
- ![Exploding Heffalump](hellgif.gif)
+ ![Exploding Heffalump](https://tcp.ac/i/H8O9M.gif)
 
 ## Grave Consequences
 
