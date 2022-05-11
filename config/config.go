@@ -158,7 +158,8 @@ func processOpts() {
 	}
 	// string slice options and their exported variables
 	strSliceOpt := map[string]*[]string{
-		"http.router.paths": &Paths,
+		"http.router.paths":            &Paths,
+		"http.uagent_string_blacklist": &UseragentBlacklistMatchers,
 	}
 	// bool options and their exported variables
 	boolOpt := map[string]*bool{
