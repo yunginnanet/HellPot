@@ -22,9 +22,16 @@ func process(in string) (s string) {
 	var v = strings.Split(config.Version, "")
 	maj := v[0]
 	min := v[2]
-	smin := v[4]
+	smin := ""
+	if len(v) > 3 {
+		smin = v[4]
+	}
+
 	sp := strings.Split(squish.UnpackStr(in), "|")
 	s = sp[0]
+	if smin == "" {
+		s = strings.ReplaceAll(s, "$1;40m.", "$1;40m")
+	}
 	c := strings.Split(sp[1], ",")
 	cproc := func(in, num string) (inr string) {
 		inr = in
@@ -37,6 +44,7 @@ func process(in string) (s string) {
 	for n := 1; n < 5; n++ {
 		s = cproc(s, fmt.Sprintf("%d", n))
 	}
+
 	s = strings.ReplaceAll(s, "$maj", maj)
 	s = strings.ReplaceAll(s, "$min", min)
 	s = strings.ReplaceAll(s, "$smin", smin)
