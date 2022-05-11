@@ -58,8 +58,8 @@ In the event of a missing configuration file, HellPot will attempt to place it's
 
 666 ) 𝙏͘͝𝙝̓̓͛𝙚͑̈́̀ 𝙨͆͠͝𝙠͑̾͌𝙮̽͌͆ 𝙞̓̔̔𝙨͒͐͝ 𝙛͑̈́̚𝙖͛͒𝙡͑͆̽𝙡̾̚̚𝙞͋̒̒𝙣̾͛͝𝙜͒̒̀.́̔͝​
 
-## Example Config (toml) 
-   
+## Configuration Reference 
+
 ```toml
 [deception]
   # Used as "Server" HTTP header. Note that reverse proxies may hide this.
@@ -69,6 +69,10 @@ In the event of a missing configuration file, HellPot will attempt to place it's
   # TCP Listener (default)
   bind_addr = "127.0.0.1"
   bind_port = "8080"
+
+  # this contains a list of blacklisted useragent strings. (case sensitive)
+  # clients with useragents containing any of these strings will receive "Not found" for any requests.
+  uagent_string_blacklist = ["Cloudflare-Traffic-Manager", "curl"]
 
   # Unix Socket Listener (will override default)
   unix_socket_path = "/var/run/hellpot"
@@ -88,8 +92,11 @@ In the event of a missing configuration file, HellPot will attempt to place it's
   debug = true
   # extra verbose (-vv)
   trace = false
+  # JSON log files will be storn in the below directory. 
   directory = "/home/kayos/.config/HellPot/logs/"
+  # disable all color in console output. when using Windows this will default to true.
   nocolor = false
+  # toggles the use of the current date as the names for new log files.
   use_date_filename = true
 
 [performance]

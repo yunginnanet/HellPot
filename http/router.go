@@ -3,7 +3,9 @@ package http
 import (
 	"bufio"
 	"fmt"
+	"net/http"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/fasthttp/router"
@@ -31,10 +33,19 @@ func hellPot(ctx *fasthttp.RequestCtx) {
 	}
 
 	remoteAddr := getRealRemote(ctx)
+
 	slog := log.With().
 		Str("USERAGENT", string(ctx.UserAgent())).
 		Str("REMOTE_ADDR", remoteAddr).
 		Interface("URL", string(ctx.RequestURI())).Logger()
+
+	for _, denied := range config.UseragentBlacklistMatchers {
+		if strings.Contains(string(ctx.UserAgent()), denied) {
+			slog.Trace().Msg("Ignoring useragent")
+			ctx.Error("Not found", http.StatusNotFound)
+			return
+		}
+	}
 
 	if config.Trace {
 		slog = slog.With().Str("caller", path).Logger()

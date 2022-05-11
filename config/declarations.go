@@ -38,6 +38,11 @@ var (
 	// if UseUnixSocket, also defined via our toml configuration file, is set to true.
 	UnixSocketPath        = ""
 	UnixSocketPermissions uint32
+
+	// UseragentBlacklistMatchers contains useragent matches checked for with strings.Contains() that
+	// prevent HellPot from firing off.
+	// See: https://github.com/yunginnanet/HellPot/issues/23
+	UseragentBlacklistMatchers []string
 )
 
 // "performance"
