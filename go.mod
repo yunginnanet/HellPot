@@ -7,7 +7,7 @@ require (
 	github.com/fasthttp/router v1.4.9
 	github.com/rs/zerolog v1.26.1
 	github.com/spf13/viper v1.11.0
-	github.com/valyala/fasthttp v1.36.0
+	github.com/valyala/fasthttp v1.37.0
 )
 
 require (
