@@ -5,7 +5,7 @@ go 1.18
 require (
 	git.tcp.direct/kayos/common/squish v0.0.0-20220210125455-40e3d2190a52
 	github.com/fasthttp/router v1.4.10
-	github.com/rs/zerolog v1.26.1
+	github.com/rs/zerolog v1.27.0
 	github.com/spf13/viper v1.11.0
 	github.com/valyala/fasthttp v1.37.0
 )
@@ -16,6 +16,8 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/klauspost/compress v1.15.0 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.0-beta.8 // indirect
