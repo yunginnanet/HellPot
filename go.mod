@@ -4,10 +4,10 @@ go 1.18
 
 require (
 	git.tcp.direct/kayos/common/squish v0.0.0-20220210125455-40e3d2190a52
-	github.com/fasthttp/router v1.4.9
+	github.com/fasthttp/router v1.4.10
 	github.com/rs/zerolog v1.26.1
 	github.com/spf13/viper v1.11.0
-	github.com/valyala/fasthttp v1.36.0
+	github.com/valyala/fasthttp v1.37.0
 )
 
 require (
@@ -19,7 +19,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.0-beta.8 // indirect
-	github.com/savsgio/gotils v0.0.0-20220401102855-e56b59f40436 // indirect
+	github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
