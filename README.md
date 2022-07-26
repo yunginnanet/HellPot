@@ -93,7 +93,7 @@ In the event of a missing configuration file, HellPot will attempt to place it's
   # extra verbose (-vv)
   trace = false
   # JSON log files will be storn in the below directory. 
-  directory = "/home/kayos/.config/HellPot/logs/"
+  directory = "/home/kayos/.local/share/HellPot/logs/"
   # disable all color in console output. when using Windows this will default to true.
   nocolor = false
   # toggles the use of the current date as the names for new log files.

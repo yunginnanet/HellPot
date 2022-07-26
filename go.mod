@@ -3,9 +3,10 @@ module github.com/yunginnanet/HellPot
 go 1.18
 
 require (
-	git.tcp.direct/kayos/common/squish v0.0.0-20220210125455-40e3d2190a52
+	git.tcp.direct/kayos/common v0.7.0
 	github.com/fasthttp/router v1.4.10
 	github.com/rs/zerolog v1.27.0
+	github.com/spf13/afero v1.9.2
 	github.com/spf13/viper v1.12.0
 	github.com/valyala/fasthttp v1.38.0
 )
@@ -22,7 +23,6 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d // indirect
-	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
