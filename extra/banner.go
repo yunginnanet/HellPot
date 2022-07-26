@@ -22,12 +22,9 @@ func process(in string) (s string) {
 	var v = strings.Split(config.Version, "")
 	maj := v[0]
 	min := v[2]
-	smin := ""
-	if len(v) > 3 {
-		smin = v[4]
-	}
-
-	sp := strings.Split(squish.UnpackStr(in), "|")
+	smin := v[4]
+	defl8, _ := squish.UnpackStr(in)
+	sp := strings.Split(defl8, "|")
 	s = sp[0]
 	if smin == "" {
 		s = strings.ReplaceAll(s, "$1;40m.", "$1;40m")

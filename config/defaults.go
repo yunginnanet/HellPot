@@ -1,9 +1,11 @@
 package config
 
 import (
-	"fmt"
+	"io"
 	"os"
 	"runtime"
+
+	"github.com/spf13/afero"
 )
 
 func init() {
@@ -11,7 +13,7 @@ func init() {
 	if home, err = os.UserHomeDir(); err != nil {
 		panic(err)
 	}
-	defOpts["logger"]["directory"] = home + "/.config/" + Title + "/logs/"
+	defOpts["logger"]["directory"] = home + "/.local/share/" + Title + "/logs/"
 
 }
 
@@ -55,23 +57,38 @@ var defOpts = map[string]map[string]interface{}{
 	},
 }
 
+func gen(memfs afero.Fs) {
+	if err := snek.SafeWriteConfigAs("config.toml"); err != nil {
+		print(err.Error())
+		os.Exit(1)
+	}
+	var f afero.File
+	var err error
+	f, err = memfs.Open("config.toml")
+	if err != nil {
+		println(err.Error())
+		os.Exit(1)
+	}
+	newcfg, err := io.ReadAll(f)
+	if err != nil {
+		println(err.Error())
+		os.Exit(1)
+	}
+	println(string(newcfg))
+}
+
 func setDefaults() {
+	memfs := afero.NewMemMapFs()
 	//goland:noinspection GoBoolExpressions
 	if runtime.GOOS == "windows" {
-		snek.SetDefault("logger.directory", "./logs/")
+		snek.SetDefault("logger.directory", "./hellpot-logs/")
 		defNoColor = true
 	}
-
 	for _, def := range configSections {
 		snek.SetDefault(def, defOpts[def])
 	}
-
 	if GenConfig {
-		if err := snek.SafeWriteConfigAs("./config.toml"); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		}
-		os.Exit(0)
+		snek.SetFs(memfs)
+		gen(memfs)
 	}
-
 }

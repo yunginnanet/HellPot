@@ -7,6 +7,8 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"git.tcp.direct/kayos/common/squish"
 )
 
 // ScanHTML is a basic split function for a Scanner that returns each
@@ -54,7 +56,12 @@ func ScanHTML(data []byte, atEOF bool) (advance int, token []byte, err error) {
 type tokenPair [2]string
 
 // DefaultMarkovMap is a Markov chain based on src.
-var DefaultMarkovMap = MakeMarkovMap(strings.NewReader(getSrc()))
+var DefaultMarkovMap MarkovMap
+
+func init() {
+	src, _ := squish.UnpackStr(srcGz)
+	DefaultMarkovMap = MakeMarkovMap(strings.NewReader(src))
+}
 
 // MarkovMap is a map that acts as a Markov chain generator.
 type MarkovMap map[tokenPair][]string
