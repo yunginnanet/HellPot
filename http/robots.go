@@ -2,25 +2,28 @@ package http
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/valyala/fasthttp"
 
 	"github.com/yunginnanet/HellPot/config"
 )
 
-const robotsTxt = "User-agent: *\r\n"
-
 func robotsTXT(ctx *fasthttp.RequestCtx) {
-	var paths string
+	paths := &strings.Builder{}
+	paths.WriteString("User-agent: *\r\n")
 	for _, p := range config.Paths {
-		paths = paths + "Disallow: " + p + "\r\n"
+		paths.WriteString("Disallow: ")
+		paths.WriteString(p)
+		paths.WriteString("\r\n")
 	}
+	paths.WriteString("\r\n")
 
 	log.Debug().
 		Strs("PATHS", config.Paths).
 		Msg("SERVE_ROBOTS")
 
-	if _, err := fmt.Fprintf(ctx, robotsTxt+paths+"\r\n"); err != nil {
+	if _, err := fmt.Fprintf(ctx, paths.String()); err != nil {
 		log.Error().Err(err).Msg("SERVE_ROBOTS_ERROR")
 	}
 }
