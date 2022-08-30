@@ -5,7 +5,7 @@ go 1.18
 require (
 	git.tcp.direct/kayos/common/squish v0.0.0-20220210125455-40e3d2190a52
 	github.com/fasthttp/router v1.4.11
-	github.com/rs/zerolog v1.27.0
+	github.com/rs/zerolog v1.28.0
 	github.com/spf13/viper v1.12.0
 	github.com/valyala/fasthttp v1.39.0
 )
