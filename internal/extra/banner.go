@@ -22,15 +22,22 @@ func rc(s []string) string {
 
 func process(in string) (s string) {
 	var v = strings.Split(config.Version, "")
-	maj := v[0]
-	min := v[2]
-	smin := v[4]
+	var maj, min, smin = "", "", ""
+	if len(config.Version) > 0 {
+		maj = v[0]
+	}
+	if len(config.Version) > 2 {
+		min = v[2]
+	}
+	if len(config.Version) > 4 {
+		smin = v[4]
+	}
 	defl8, _ := squish.UnpackStr(in)
 	sp := strings.Split(defl8, "|")
 	s = sp[0]
-	if smin == "" || len(config.Version) == 7 {
+	if smin == "" || len(config.Version) == 7 || config.Version == "dev" {
 		s = strings.ReplaceAll(s, "$1;40m.", "$1;40m")
-		if len(config.Version) == 7 {
+		if len(config.Version) == 7 || config.Version == "dev" {
 			s = strings.ReplaceAll(s, "$3;40m.", "$3;40m")
 		}
 	}
@@ -46,7 +53,7 @@ func process(in string) (s string) {
 	for n := 1; n < 5; n++ {
 		s = cproc(s, fmt.Sprintf("%d", n))
 	}
-	if len(config.Version) == 7 {
+	if len(config.Version) == 7 || config.Version == "dev" {
 		maj = "[" + config.Version + "]"
 		min = ""
 		smin = ""
