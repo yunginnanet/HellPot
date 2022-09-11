@@ -14,7 +14,7 @@ func init() {
 	if home, err = os.UserHomeDir(); err != nil {
 		panic(err)
 	}
-	defOpts["logger"]["directory"] = path.Join(home, ".local", "share", Title+"logs")
+	defOpts["logger"]["directory"] = path.Join(home, ".local", "share", Title, "logs")
 	prefConfigLocation = path.Join(home, ".config", Title)
 }
 
