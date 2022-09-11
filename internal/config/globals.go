@@ -1,11 +1,25 @@
 package config
 
-const (
-	// Version roughly represents the applications current version.
-	Version = "0.4.1"
-	// Title is the name of the application used throughout the configuration process.
-	Title = "HellPot"
-)
+import "runtime/debug"
+
+// Title is the name of the application used throughout the configuration process.
+const Title = "HellPot"
+
+var Version = "dev"
+
+func init() {
+	binInfo := make(map[string]string)
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return
+	}
+	for _, v := range info.Settings {
+		binInfo[v.Key] = v.Value
+	}
+	if gitrev, ok := binInfo["vcs.revision"]; ok && Version == "dev" {
+		Version = gitrev[:7]
+	}
+}
 
 var (
 	// BannerOnly when toggled causes HellPot to only print the banner and version then exit.
