@@ -26,8 +26,11 @@ func process(in string) (s string) {
 	defl8, _ := squish.UnpackStr(in)
 	sp := strings.Split(defl8, "|")
 	s = sp[0]
-	if smin == "" {
+	if smin == "" || len(config.Version) == 7 {
 		s = strings.ReplaceAll(s, "$1;40m.", "$1;40m")
+		if len(config.Version) == 7 {
+			s = strings.ReplaceAll(s, "$3;40m.", "$3;40m")
+		}
 	}
 	c := strings.Split(sp[1], ",")
 	cproc := func(in, num string) (inr string) {
@@ -41,7 +44,11 @@ func process(in string) (s string) {
 	for n := 1; n < 5; n++ {
 		s = cproc(s, fmt.Sprintf("%d", n))
 	}
-
+	if len(config.Version) == 7 {
+		maj = "[" + config.Version + "]"
+		min = ""
+		smin = ""
+	}
 	s = strings.ReplaceAll(s, "$maj", maj)
 	s = strings.ReplaceAll(s, "$min", min)
 	s = strings.ReplaceAll(s, "$smin", smin)
