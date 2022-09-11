@@ -1,5 +1,4 @@
 //go:build linux || darwin || freebsd
-// +build linux darwin freebsd
 
 package http
 
@@ -11,7 +10,7 @@ import (
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
 
-	"github.com/yunginnanet/HellPot/config"
+	"github.com/yunginnanet/HellPot/internal/config"
 )
 
 func listenOnUnixSocket(addr string, r *router.Router) error {

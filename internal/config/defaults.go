@@ -3,6 +3,7 @@ package config
 import (
 	"io"
 	"os"
+	"path"
 	"runtime"
 
 	"github.com/spf13/afero"
@@ -13,8 +14,8 @@ func init() {
 	if home, err = os.UserHomeDir(); err != nil {
 		panic(err)
 	}
-	defOpts["logger"]["directory"] = home + "/.local/share/" + Title + "/logs/"
-
+	defOpts["logger"]["directory"] = path.Join(home, ".local", "share", Title+"logs")
+	prefConfigLocation = path.Join(home, ".config", Title)
 }
 
 var (
@@ -81,7 +82,6 @@ func setDefaults() {
 	memfs := afero.NewMemMapFs()
 	//goland:noinspection GoBoolExpressions
 	if runtime.GOOS == "windows" {
-		snek.SetDefault("logger.directory", "./hellpot-logs/")
 		defNoColor = true
 	}
 	for _, def := range configSections {

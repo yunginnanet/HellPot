@@ -5,11 +5,28 @@ import (
 	"io"
 	"math/rand"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
 	"git.tcp.direct/kayos/common/squish"
 )
+
+var DefaultMarkovMap MarkovMap
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+	// DefaultMarkovMap is a Markov chain based on src.
+	src, err := squish.UnpackStr(SrcGz)
+	if err != nil {
+		panic(err)
+	}
+	if len(src) < 1 {
+		panic("failed to unpack source")
+	}
+	DefaultMarkovMap = MakeMarkovMap(strings.NewReader(src))
+	DefaultHeffalump = NewHeffalump(DefaultMarkovMap, 100*1<<10)
+}
 
 // ScanHTML is a basic split function for a Scanner that returns each
 // space-separated word of text or HTML tag, with surrounding spaces deleted.
@@ -25,14 +42,15 @@ func ScanHTML(data []byte, atEOF bool) (advance int, token []byte, err error) {
 			break
 		}
 	}
-	if r == '<' {
+	switch {
+	case r == '<':
 		// Scan until closing bracket
 		for i := start; i < len(data); i++ {
 			if data[i] == '>' {
 				return i + 1, data[start : i+1], nil
 			}
 		}
-	} else {
+	default:
 		// Scan until space, marking end of word.
 		for width, i := 0, start; i < len(data); i += width {
 			var r rune
@@ -55,14 +73,6 @@ func ScanHTML(data []byte, atEOF bool) (advance int, token []byte, err error) {
 
 type tokenPair [2]string
 
-// DefaultMarkovMap is a Markov chain based on src.
-var DefaultMarkovMap MarkovMap
-
-func init() {
-	src, _ := squish.UnpackStr(srcGz)
-	DefaultMarkovMap = MakeMarkovMap(strings.NewReader(src))
-}
-
 // MarkovMap is a map that acts as a Markov chain generator.
 type MarkovMap map[tokenPair][]string
 
@@ -80,7 +90,7 @@ func (mm MarkovMap) Fill(r io.Reader) {
 	s := bufio.NewScanner(r)
 	s.Split(ScanHTML)
 	for s.Scan() {
-		w3 := s.Text()
+		w3 = s.Text()
 		mm.Add(w1, w2, w3)
 		w1, w2 = w2, w3
 	}
@@ -101,7 +111,6 @@ func (mm MarkovMap) Get(w1, w2 string) string {
 	if !ok {
 		return ""
 	}
-
 	// We don't care about cryptographically sound entropy here, ignore gosec G404.
 	/* #nosec */
 	r := rand.Intn(len(suffix))
@@ -111,7 +120,6 @@ func (mm MarkovMap) Get(w1, w2 string) string {
 // Read fills p with data from calling Get on the MarkovMap.
 func (mm MarkovMap) Read(p []byte) (n int, err error) {
 	var w1, w2, w3 string
-
 	for {
 		w3 = mm.Get(w1, w2)
 		if n+len(w3)+1 >= len(p) {
@@ -121,6 +129,5 @@ func (mm MarkovMap) Read(p []byte) (n int, err error) {
 		n += copy(p[n:], "\n")
 		w1, w2 = w2, w3
 	}
-
 	return
 }
