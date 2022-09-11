@@ -7,9 +7,9 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/yunginnanet/HellPot/config"
-	"github.com/yunginnanet/HellPot/extra"
-	"github.com/yunginnanet/HellPot/http"
+	"github.com/yunginnanet/HellPot/internal/config"
+	"github.com/yunginnanet/HellPot/internal/extra"
+	"github.com/yunginnanet/HellPot/internal/http"
 )
 
 var log zerolog.Logger
@@ -17,7 +17,7 @@ var log zerolog.Logger
 func init() {
 	config.Init()
 	if config.BannerOnly {
-		extra.PrintBanner()
+		extra.Banner()
 		os.Exit(0)
 	}
 	log = config.StartLogger()

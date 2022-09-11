@@ -19,7 +19,7 @@ var (
 	customconfig       = false
 	home               string
 	prefConfigLocation string
-	snek               *viper.Viper
+	snek               = viper.New()
 )
 
 // exported generic vars
@@ -32,30 +32,7 @@ var (
 	Filename string
 )
 
-func init() {
-	prefConfigLocation = home + "/.config/" + Title
-	snek = viper.New()
-}
-
-func windowsConfig() {
-	newconfig := "hellpot-config"
-	snek.SetConfigName(newconfig)
-	if err := snek.MergeInConfig(); err == nil {
-		return
-	}
-	if err := snek.SafeWriteConfigAs(newconfig + ".toml"); err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-	return
-}
-
 func writeConfig() {
-	//goland:noinspection GoBoolExpressions
-	if runtime.GOOS == "windows" {
-		windowsConfig()
-		return
-	}
 	if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
 		if err = os.MkdirAll(prefConfigLocation, 0o750); err != nil {
 			println("error writing new config: " + err.Error())
@@ -64,7 +41,7 @@ func writeConfig() {
 	}
 	Filename = prefConfigLocation + "/" + "config.toml"
 	if err := snek.SafeWriteConfigAs(Filename); err != nil {
-		fmt.Println("Failed to write new configuration file: " + err.Error())
+		fmt.Println("Failed to write new configuration file to '" + Filename + "': " + err.Error())
 		os.Exit(1)
 	}
 }
@@ -119,9 +96,8 @@ func loadCustomConfig(path string) {
 		os.Exit(1)
 	}
 
-	Filename, _ = filepath.Abs(path)
-
-	if len(Filename) < 1 {
+	Filename, err = filepath.Abs(path)
+	if len(Filename) < 1 || err != nil {
 		Filename = path
 	}
 

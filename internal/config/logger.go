@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -36,7 +37,7 @@ func StartLogger() zerolog.Logger {
 		logFileName = logFileName + "_" + tn
 	}
 
-	CurrentLogFile = logDir + logFileName + ".log"
+	CurrentLogFile = path.Join(logDir, logFileName+".log")
 
 	var err error
 
