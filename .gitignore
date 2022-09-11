@@ -5,3 +5,4 @@ HellPot
 *.save
 *.toml
 *.yaml
+.backups/
