@@ -4,11 +4,11 @@ go 1.19
 
 require (
 	git.tcp.direct/kayos/common v0.7.6
-	github.com/fasthttp/router v1.4.13
+	github.com/fasthttp/router v1.4.14
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/afero v1.9.3
 	github.com/spf13/viper v1.14.0
-	github.com/valyala/fasthttp v1.41.0
+	github.com/valyala/fasthttp v1.42.0
 )
 
 require (
