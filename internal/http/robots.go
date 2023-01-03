@@ -12,7 +12,7 @@ import (
 func robotsTXT(ctx *fasthttp.RequestCtx) {
 	slog := log.With().
 		Str("USERAGENT", string(ctx.UserAgent())).
-		Str("REMOTE_ADDR", remoteAddr).
+		Str("REMOTE_ADDR", getRealRemote(ctx)).
 		Interface("URL", string(ctx.RequestURI())).Logger()
 	paths := &strings.Builder{}
 	paths.WriteString("User-agent: *\r\n")
