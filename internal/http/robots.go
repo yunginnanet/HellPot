@@ -10,6 +10,10 @@ import (
 )
 
 func robotsTXT(ctx *fasthttp.RequestCtx) {
+	slog := log.With().
+		Str("USERAGENT", string(ctx.UserAgent())).
+		Str("REMOTE_ADDR", getRealRemote(ctx)).
+		Interface("URL", string(ctx.RequestURI())).Logger()
 	paths := &strings.Builder{}
 	paths.WriteString("User-agent: *\r\n")
 	for _, p := range config.Paths {
@@ -19,11 +23,11 @@ func robotsTXT(ctx *fasthttp.RequestCtx) {
 	}
 	paths.WriteString("\r\n")
 
-	log.Debug().
+	slog.Debug().
 		Strs("PATHS", config.Paths).
 		Msg("SERVE_ROBOTS")
 
 	if _, err := fmt.Fprintf(ctx, paths.String()); err != nil {
-		log.Error().Err(err).Msg("SERVE_ROBOTS_ERROR")
+		slog.Error().Err(err).Msg("SERVE_ROBOTS_ERROR")
 	}
 }

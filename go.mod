@@ -3,7 +3,7 @@ module github.com/yunginnanet/HellPot
 go 1.19
 
 require (
-	git.tcp.direct/kayos/common/squish v0.0.0-20220210125455-40e3d2190a52
+	git.tcp.direct/kayos/common v0.8.0
 	github.com/fasthttp/router v1.4.14
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/afero v1.9.3
@@ -28,7 +28,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	golang.org/x/sys v0.0.0-20220908164124-27713097b956 // indirect
+	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
