@@ -1,12 +1,17 @@
-Name: Build and Release
+name: Build and Release
 
 on:
-  push:
-    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'The repository from which the slash command was dispatched'
+        required: true
+      comment-id:
+        description: 'The comment-id of the slash command'
+        required: true
 
 jobs:
   releases-matrix:
-    name: Build and Release
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -31,3 +36,10 @@ jobs:
         build_flags: -trimpath
         pre_command: export CGO_ENABLED=0
         ldflags: -s -w
+    - name: Add reaction
+      uses: peter-evans/create-or-update-comment@v2
+      with:
+        token: ${{ secrets.PAT }}
+        repository: ${{ github.event.inputs.repository }}
+        comment-id: ${{ github.event.inputs.comment-id }}
+        reaction-type: hooray

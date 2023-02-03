@@ -1,0 +1,20 @@
+name: Slash Command Dispatch
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  slashCommandDispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slash Command Dispatch
+        uses: peter-evans/slash-command-dispatch@v3
+        with:
+          token: ${{ secrets.PAT }}
+          commands: |
+            release
+          dispatch-type: workflow
+          permission: admin
+          repository: ${{ github.event.inputs.repository }}
+          static-args: |
+            repository=${{ github.repository }}
+            comment-id=${{ github.event.comment.id }}
