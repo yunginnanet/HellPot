@@ -1,8 +1,8 @@
-Name: Build and Release
+name: Build and Release
 
 on:
-  push:
-    branches: [ master ]
+  release:
+    types: [created]
 
 jobs:
   releases-matrix:
