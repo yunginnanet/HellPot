@@ -9,6 +9,9 @@ on:
       comment-id:
         description: 'The comment-id of the slash command'
         required: true
+      tag:
+        description: 'The tag to be released'
+        required: true
 
 jobs:
   release:
@@ -36,6 +39,7 @@ jobs:
         build_flags: -trimpath
         pre_command: export CGO_ENABLED=0
         ldflags: -s -w
+        release_tag: ${{ github.event.inputs.tag }}
     - name: Add reaction
       uses: peter-evans/create-or-update-comment@v2
       with:
