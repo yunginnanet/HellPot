@@ -11,7 +11,7 @@ on:
         required: true
 
 jobs:
-  releases-matrix:
+  release:
     runs-on: ubuntu-latest
     strategy:
       matrix:
