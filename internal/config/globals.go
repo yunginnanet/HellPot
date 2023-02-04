@@ -16,6 +16,7 @@ func init() {
 	for _, v := range info.Settings {
 		binInfo[v.Key] = v.Value
 	}
+
 	if gitrev, ok := binInfo["vcs.revision"]; ok && Version == "dev" {
 		Version = gitrev[:7]
 	}

@@ -9,6 +9,7 @@ require (
 	github.com/spf13/afero v1.9.3
 	github.com/spf13/viper v1.15.0
 	github.com/valyala/fasthttp v1.44.0
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 )
 
 require (
