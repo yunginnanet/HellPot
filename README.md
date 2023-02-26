@@ -123,14 +123,12 @@ location '/wp-login.php' {
 ```
 ## Example Web Server Config (apache)  
 
-In the example, all nonexisting URLs are being reverse proxied to a HellPot instance on localhost, which can be set to catchall. This is done by (ab)using Apache's customizable ErrorDocument and set it to be served from HellPot.
+All nonexisting URLs are being reverse proxied to a HellPot instance on localhost, which is set to catchall. Traffic served by HellBot is rate limited to 5 KiB/s.
 
-The example also contain how one may implement rate limiting in the webserver. Adapt as you see fit, the example limits each request to 5KiB/s. 
-
-* ) Create your normal robots.txt and usual content. Also create the fake Errordocument handler directory and files (files can be empty). In the example, the directory is "/content/"
-* ) A request on a URL with a normal existing handler (such as a filesystem object) will be handled by apache
-* ) Requests on nonexisting URLs renders a HTTP Error 404, which content happens to be reverseproxied to HellPot
-* ) The example excludes any URL under the "/.well-known/" suffix, to which unsolicited requests may be regarded as valid and expected.
+* Create your normal robots.txt and usual content. Also create the fake Errordocument directory and files (files can be empty). In the example, the directory is "/content/"
+* A request on a URL with an existing handler (f.e. a file) will be handled by apache
+* Requests on nonexisting URLs cause a HTTP Error 404, which content is served by HellPot
+* URLs under the "/.well-known/" suffix are excluded.
 
 ```
 <VirtualHost yourserver>
@@ -144,7 +142,7 @@ The example also contain how one may implement rate limiting in the webserver. A
         ErrorDocument 404 default
         ErrorDocument 500 default
     </Directory>
-    /* Reverse Proxy any request under /content (need mod_proxy, mod_proxy_http) */
+    /* HTTP Honeypot / HellBot (need mod_proxy, mod_proxy_http) */
     ProxyPreserveHost	on
     ProxyPass         "/content/" "http://localhost:8080/"
     ProxyPassReverse  "/content/" "http://localhost:8080/"
@@ -155,7 +153,7 @@ The example also contain how one may implement rate limiting in the webserver. A
         SetEnv rate-limit 5
     </Location>
 
-    /* Remaining normal Apache virtualhost config */
+    /* Remaining config */
 
 </VirtualHost>
 ```
