@@ -121,3 +121,41 @@ location '/wp-login.php' {
 	proxy_pass http://127.0.0.1:8080$request_uri;
 }
 ```
+## Example Web Server Config (apache)  
+
+In the example, all nonexisting URLs are being reverse proxied to a HellPot instance on localhost, which can be set to catchall. This is done by (ab)using Apache's customizable ErrorDocument and set it to be served from HellPot.
+
+The example also contain how one may implement rate limiting in the webserver. Adapt as you see fit, the example limits each request to 5KiB/s. 
+
+* ) Create your normal robots.txt and usual content. Also create the fake Errordocument handler directory and files (files can be empty). In the example, the directory is "/content/"
+* ) A request on a URL with a normal existing handler (such as a filesystem object) will be handled by apache
+* ) Requests on nonexisting URLs renders a HTTP Error 404, which content happens to be reverseproxied to HellPot
+* ) The example excludes any URL under the "/.well-known/" suffix, to which unsolicited requests may be regarded as valid and expected.
+
+```
+<VirtualHost yourserver>
+    ErrorDocument 400 "/content/400"
+    ErrorDocument 403 "/content/403"
+    ErrorDocument 404 "/content/404"
+    ErrorDocument 500 "/content/405"
+    <Directory "$wwwroot/.well-known/">
+        ErrorDocument 400 default
+        ErrorDocument 403 default
+        ErrorDocument 404 default
+        ErrorDocument 500 default
+    </Directory>
+    /* Reverse Proxy any request under /content (need mod_proxy, mod_proxy_http) */
+    ProxyPreserveHost	on
+    ProxyPass         "/content/" "http://localhost:8080/"
+    ProxyPassReverse  "/content/" "http://localhost:8080/"
+
+    /* Rate Limit config, need mod_ratelimit */
+    <Location "/content/">
+        SetOutputFilter RATE_LIMIT
+        SetEnv rate-limit 5
+    </Location>
+
+    /* Remaining normal Apache virtualhost config */
+
+</VirtualHost>
+```
