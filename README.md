@@ -123,7 +123,7 @@ location '/wp-login.php' {
 ```
 ## Example Web Server Config (apache)  
 
-All nonexisting URLs are being reverse proxied to a HellPot instance on localhost, which is set to catchall. Traffic served by HellBot is rate limited to 5 KiB/s.
+All nonexisting URLs are being reverse proxied to a HellPot instance on localhost, which is set to catchall. Traffic served by HellPot is rate limited to 5 KiB/s.
 
 * Create your normal robots.txt and usual content. Also create the fake Errordocument directory and files (files can be empty). In the example, the directory is "/content/"
 * A request on a URL with an existing handler (f.e. a file) will be handled by apache
@@ -142,7 +142,7 @@ All nonexisting URLs are being reverse proxied to a HellPot instance on localhos
         ErrorDocument 404 default
         ErrorDocument 500 default
     </Directory>
-    /* HTTP Honeypot / HellBot (need mod_proxy, mod_proxy_http) */
+    /* HTTP Honeypot / HellPot (need mod_proxy, mod_proxy_http) */
     ProxyPreserveHost	on
     ProxyPass         "/content/" "http://localhost:8080/"
     ProxyPassReverse  "/content/" "http://localhost:8080/"
