@@ -32,13 +32,13 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
-        goversion: "https://dl.google.com/go/go1.19.5.linux-amd64.tar.gz"
+        goversion: "https://dl.google.com/go/go1.20.1.linux-amd64.tar.gz"
         project_path: "./cmd/HellPot"
         binary_name: "HellPot"
         extra_files: LICENSE README.md
         build_flags: -trimpath
         pre_command: export CGO_ENABLED=0
-        ldflags: -s -w
+        ldflags: -s -w -X main.version=${{ github.event.inputs.tag }}
         release_tag: ${{ github.event.inputs.tag }}
     - name: Add reaction
       uses: peter-evans/create-or-update-comment@v2
