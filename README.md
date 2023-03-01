@@ -18,17 +18,17 @@ HellPot will send an infinite stream of data that is *just close enough* to bein
 
 Under the hood of this eternal suffering is a markov engine that chucks bits and pieces of [The Birth of Tragedy (Hellenism and Pessimism)](https://www.gutenberg.org/files/51356/51356-h/51356-h.htm) by Friedrich Nietzsche at the client using [fasthttp](https://github.com/valyala/fasthttp).
 
-## Compilation
+## Building From Source
 
 HellPot should probably be built with Go version 1.17 or higher.
 
-HellPot uses [go modules](https://go.dev/blog/using-go-modules). This should make it dead simple to build with a stock Go installation.
+HellPot uses [go modules](https://go.dev/blog/using-go-modules). This should make it dead simple to build with a stock Go installation. To make it even simpler, we've added a GNU Makefile.
 
 1 ) `git clone https://github.com/yunginnanet/HellPot`
 
 2 ) `cd HellPot`
 
-4 ) `go build cmd/HellPot/HellPot.go`
+4 ) `make`
 
 5 ) *Consider the potential grave consequences of your actions.*
 

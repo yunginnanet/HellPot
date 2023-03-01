@@ -8,6 +8,9 @@ const Title = "HellPot"
 var Version = "dev"
 
 func init() {
+	if Version != "dev" {
+		return
+	}
 	binInfo := make(map[string]string)
 	info, ok := debug.ReadBuildInfo()
 	if !ok {

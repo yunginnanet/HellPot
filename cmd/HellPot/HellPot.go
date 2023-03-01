@@ -12,9 +12,16 @@ import (
 	"github.com/yunginnanet/HellPot/internal/http"
 )
 
-var log zerolog.Logger
+var (
+	log     zerolog.Logger
+	version string // set by linker
+)
 
 func init() {
+	if version != "" {
+		println(version)
+		config.Version = version[1:]
+	}
 	config.Init()
 	if config.BannerOnly {
 		extra.Banner()
