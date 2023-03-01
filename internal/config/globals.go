@@ -42,6 +42,10 @@ var (
 	HTTPBind string
 	// HTTPPort is defined via our toml configuration file. It is the port that HellPot listens on.
 	HTTPPort string
+	// HeaderName is defined via our toml configuration file. It is the HTTP Header containing the original IP of the client,
+	// in traditional reverse Proxy deplyoments.
+	HeaderName string
+
 	// Paths are defined via our toml configuration file. These are the paths that HellPot will present for "robots.txt"
 	//       These are also the paths that HellPot will respond for. Other paths will throw a warning and will serve a 404.
 	Paths []string

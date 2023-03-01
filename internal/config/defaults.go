@@ -36,6 +36,7 @@ var defOpts = map[string]map[string]interface{}{
 		"unix_socket_permissions": "0666",
 		"bind_addr":               "127.0.0.1",
 		"bind_port":               "8080",
+		"real_ip_header":          "X-Real-IP",
 
 		"router": map[string]interface{}{
 			"catchall":   false,

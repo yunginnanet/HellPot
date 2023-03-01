@@ -70,6 +70,9 @@ In the event of a missing configuration file, HellPot will attempt to place it's
   bind_addr = "127.0.0.1"
   bind_port = "8080"
 
+  # header name containing clients real IP, for reverse proxy deployments  
+  real_ip_header = 'X-Real-IP'
+
   # this contains a list of blacklisted useragent strings. (case sensitive)
   # clients with useragents containing any of these strings will receive "Not found" for any requests.
   uagent_string_blacklist = ["Cloudflare-Traffic-Manager", "curl"]
