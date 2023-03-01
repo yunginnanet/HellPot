@@ -73,7 +73,7 @@ func gen(memfs afero.Fs) {
 		println(err.Error())
 		os.Exit(1)
 	}
-	nf, err := os.Create(target)
+	nf, err := os.Create(target) // #nosec G304
 	if err != nil {
 		println(err.Error())
 		os.Exit(1)
