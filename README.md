@@ -124,3 +124,39 @@ location '/wp-login.php' {
 	proxy_pass http://127.0.0.1:8080$request_uri;
 }
 ```
+## Example Web Server Config (apache)  
+
+All nonexisting URLs are being reverse proxied to a HellPot instance on localhost, which is set to catchall. Traffic served by HellPot is rate limited to 5 KiB/s.
+
+* Create your normal robots.txt and usual content. Also create the fake Errordocument directory and files (files can be empty). In the example, the directory is "/content/"
+* A request on a URL with an existing handler (f.e. a file) will be handled by apache
+* Requests on nonexisting URLs cause a HTTP Error 404, which content is served by HellPot
+* URLs under the "/.well-known/" suffix are excluded.
+
+```
+<VirtualHost yourserver>
+    ErrorDocument 400 "/content/400"
+    ErrorDocument 403 "/content/403"
+    ErrorDocument 404 "/content/404"
+    ErrorDocument 500 "/content/405"
+    <Directory "$wwwroot/.well-known/">
+        ErrorDocument 400 default
+        ErrorDocument 403 default
+        ErrorDocument 404 default
+        ErrorDocument 500 default
+    </Directory>
+    /* HTTP Honeypot / HellPot (need mod_proxy, mod_proxy_http) */
+    ProxyPreserveHost	on
+    ProxyPass         "/content/" "http://localhost:8080/"
+    ProxyPassReverse  "/content/" "http://localhost:8080/"
+
+    /* Rate Limit config, need mod_ratelimit */
+    <Location "/content/">
+        SetOutputFilter RATE_LIMIT
+        SetEnv rate-limit 5
+    </Location>
+
+    /* Remaining config */
+
+</VirtualHost>
+```
