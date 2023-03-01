@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -60,6 +61,7 @@ var defOpts = map[string]map[string]interface{}{
 }
 
 func gen(memfs afero.Fs) {
+	target := fmt.Sprintf("%s.toml", Title)
 	if err := snek.SafeWriteConfigAs("config.toml"); err != nil {
 		print(err.Error())
 		os.Exit(1)
@@ -71,12 +73,17 @@ func gen(memfs afero.Fs) {
 		println(err.Error())
 		os.Exit(1)
 	}
-	newcfg, err := io.ReadAll(f)
+	nf, err := os.Create(target)
 	if err != nil {
 		println(err.Error())
 		os.Exit(1)
 	}
-	println(string(newcfg))
+	if _, err = io.Copy(nf, f); err != nil {
+		println(err.Error())
+		os.Exit(1)
+	}
+	print("default configuration successfully written to " + target)
+	os.Exit(0)
 }
 
 func setDefaults() {

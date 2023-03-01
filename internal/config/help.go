@@ -21,7 +21,7 @@ var CLI = help{
 		0: {0: "--config", 1: "<file>", 2: "Specify config file"},
 		1: {0: "--nocolor", 1: "disable color and banner"},
 		2: {0: "--banner", 1: "show banner + version and exit"},
-		3: {0: "--genconfig", 1: "write default config to 'default.toml' then exit"},
+		3: {0: "--genconfig", 1: "write default config to " + Title + ".toml then exit"},
 		4: {0: "--help", 1: "show this help and exit"},
 	},
 	out: os.Stdout,
