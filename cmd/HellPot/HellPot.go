@@ -19,7 +19,6 @@ var (
 
 func init() {
 	if version != "" {
-		println(version)
 		config.Version = version[1:]
 	}
 	config.Init()
