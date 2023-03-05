@@ -8,6 +8,9 @@ const Title = "HellPot"
 var Version = "dev"
 
 func init() {
+	if Version != "dev" {
+		return
+	}
 	binInfo := make(map[string]string)
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
@@ -16,7 +19,7 @@ func init() {
 	for _, v := range info.Settings {
 		binInfo[v.Key] = v.Value
 	}
-	if gitrev, ok := binInfo["vcs.revision"]; ok && Version == "dev" {
+	if gitrev, ok := binInfo["vcs.revision"]; ok {
 		Version = gitrev[:7]
 	}
 }
@@ -41,6 +44,10 @@ var (
 	HTTPBind string
 	// HTTPPort is defined via our toml configuration file. It is the port that HellPot listens on.
 	HTTPPort string
+	// HeaderName is defined via our toml configuration file. It is the HTTP Header containing the original IP of the client,
+	// in traditional reverse Proxy deplyoments.
+	HeaderName string
+
 	// Paths are defined via our toml configuration file. These are the paths that HellPot will present for "robots.txt"
 	//       These are also the paths that HellPot will respond for. Other paths will throw a warning and will serve a 404.
 	Paths []string

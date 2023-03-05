@@ -129,6 +129,7 @@ func processOpts() {
 	stringOpt := map[string]*string{
 		"http.bind_addr":        &HTTPBind,
 		"http.bind_port":        &HTTPPort,
+		"http.real_ip_header":   &HeaderName,
 		"logger.directory":      &logDir,
 		"deception.server_name": &FakeServerName,
 	}

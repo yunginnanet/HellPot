@@ -5,7 +5,6 @@ import (
 	"io"
 	"math/rand"
 	"strings"
-	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -15,7 +14,6 @@ import (
 var DefaultMarkovMap MarkovMap
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
 	// DefaultMarkovMap is a Markov chain based on src.
 	src, err := squish.UnpackStr(srcGz)
 	if err != nil {

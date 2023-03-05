@@ -18,17 +18,17 @@ HellPot will send an infinite stream of data that is *just close enough* to bein
 
 Under the hood of this eternal suffering is a markov engine that chucks bits and pieces of [The Birth of Tragedy (Hellenism and Pessimism)](https://www.gutenberg.org/files/51356/51356-h/51356-h.htm) by Friedrich Nietzsche at the client using [fasthttp](https://github.com/valyala/fasthttp).
 
-## Compilation
+## Building From Source
 
 HellPot should probably be built with Go version 1.17 or higher.
 
-HellPot uses [go modules](https://go.dev/blog/using-go-modules). This should make it dead simple to build with a stock Go installation.
+HellPot uses [go modules](https://go.dev/blog/using-go-modules). This should make it dead simple to build with a stock Go installation. To make it even simpler, we've added a GNU Makefile.
 
 1 ) `git clone https://github.com/yunginnanet/HellPot`
 
 2 ) `cd HellPot`
 
-4 ) `go build cmd/HellPot/HellPot.go`
+4 ) `make`
 
 5 ) *Consider the potential grave consequences of your actions.*
 
@@ -69,6 +69,9 @@ In the event of a missing configuration file, HellPot will attempt to place it's
   # TCP Listener (default)
   bind_addr = "127.0.0.1"
   bind_port = "8080"
+
+  # header name containing clients real IP, for reverse proxy deployments  
+  real_ip_header = 'X-Real-IP'
 
   # this contains a list of blacklisted useragent strings. (case sensitive)
   # clients with useragents containing any of these strings will receive "Not found" for any requests.
@@ -120,4 +123,40 @@ location '/wp-login.php' {
 	proxy_set_header X-Real-IP $remote_addr;
 	proxy_pass http://127.0.0.1:8080$request_uri;
 }
+```
+## Example Web Server Config (apache)  
+
+All nonexisting URLs are being reverse proxied to a HellPot instance on localhost, which is set to catchall. Traffic served by HellPot is rate limited to 5 KiB/s.
+
+* Create your normal robots.txt and usual content. Also create the fake Errordocument directory and files (files can be empty). In the example, the directory is "/content/"
+* A request on a URL with an existing handler (f.e. a file) will be handled by apache
+* Requests on nonexisting URLs cause a HTTP Error 404, which content is served by HellPot
+* URLs under the "/.well-known/" suffix are excluded.
+
+```
+<VirtualHost yourserver>
+    ErrorDocument 400 "/content/400"
+    ErrorDocument 403 "/content/403"
+    ErrorDocument 404 "/content/404"
+    ErrorDocument 500 "/content/405"
+    <Directory "$wwwroot/.well-known/">
+        ErrorDocument 400 default
+        ErrorDocument 403 default
+        ErrorDocument 404 default
+        ErrorDocument 500 default
+    </Directory>
+    /* HTTP Honeypot / HellPot (need mod_proxy, mod_proxy_http) */
+    ProxyPreserveHost	on
+    ProxyPass         "/content/" "http://localhost:8080/"
+    ProxyPassReverse  "/content/" "http://localhost:8080/"
+
+    /* Rate Limit config, need mod_ratelimit */
+    <Location "/content/">
+        SetOutputFilter RATE_LIMIT
+        SetEnv rate-limit 5
+    </Location>
+
+    /* Remaining config */
+
+</VirtualHost>
 ```

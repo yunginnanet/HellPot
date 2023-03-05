@@ -19,7 +19,7 @@ import (
 var log *zerolog.Logger
 
 func getRealRemote(ctx *fasthttp.RequestCtx) string {
-	xrealip := string(ctx.Request.Header.Peek("X-Real-IP"))
+	xrealip := string(ctx.Request.Header.Peek(config.HeaderName))
 	if len(xrealip) > 0 {
 		return xrealip
 	}
