@@ -6,7 +6,7 @@ require (
 	git.tcp.direct/kayos/common v0.8.1
 	github.com/fasthttp/router v1.4.17
 	github.com/rs/zerolog v1.29.0
-	github.com/spf13/afero v1.9.4
+	github.com/spf13/afero v1.9.5
 	github.com/spf13/viper v1.15.0
 	github.com/valyala/fasthttp v1.44.0
 	golang.org/x/term v0.5.0
