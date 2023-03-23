@@ -40,7 +40,7 @@ func main() {
 	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		log.Error().Err(http.Serve()).Msg("HTTP error")
+		log.Fatal().Err(http.Serve()).Msg("HTTP error")
 	}()
 
 	<-stopChan // wait for SIGINT
