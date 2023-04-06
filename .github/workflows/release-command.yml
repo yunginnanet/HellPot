@@ -41,7 +41,7 @@ jobs:
         ldflags: -s -w -X main.version=${{ github.event.inputs.tag }}
         release_tag: ${{ github.event.inputs.tag }}
     - name: Add reaction
-      uses: peter-evans/create-or-update-comment@v2
+      uses: peter-evans/create-or-update-comment@v3
       with:
         token: ${{ secrets.PAT }}
         repository: ${{ github.event.inputs.repository }}
