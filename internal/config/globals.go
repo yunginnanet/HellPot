@@ -31,6 +31,9 @@ var (
 	GenConfig = false
 	// NoColor when true will disable the banner and any colored console output.
 	NoColor bool
+	// DockerLogging when true will disable the banner and any colored console output, as well as disable the log file.
+	// Assumes NoColor == true.
+	DockerLogging bool
 	// MakeRobots when false will not respond to requests for robots.txt.
 	MakeRobots bool
 	// CatchAll when true will cause HellPot to respond to all paths.

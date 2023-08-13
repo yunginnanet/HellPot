@@ -26,13 +26,23 @@ func init() {
 		extra.Banner()
 		os.Exit(0)
 	}
-	log = config.StartLogger()
-	extra.Banner()
-	if config.Debug {
-		log.Debug().Msg("debug enabled")
+
+	switch config.DockerLogging {
+	case true:
+		config.CurrentLogFile = "/dev/stdout"
+		config.NoColor = true
+		log = config.StartLogger(false, os.Stdout)
+	default:
+		log = config.StartLogger(true)
 	}
-	log.Info().Str("file", config.Filename).Msg("current config")
-	log.Info().Str("file", config.CurrentLogFile).Msg("current log")
+
+	extra.Banner()
+
+	log.Info().Str("caller", "config").Str("file", config.Filename).Msg(config.Filename)
+	log.Info().Str("caller", "logger").Msg(config.CurrentLogFile)
+	log.Debug().Str("caller", "logger").Msg("debug enabled")
+	log.Trace().Str("caller", "logger").Msg("trace enabled")
+
 }
 
 func main() {

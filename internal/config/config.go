@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
@@ -73,6 +74,11 @@ func Init() {
 	if len(Filename) < 1 {
 		Filename = snek.ConfigFileUsed()
 	}
+
+	snek.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+	snek.SetEnvPrefix(Title)
+
+	snek.AutomaticEnv()
 
 	associateExportedVariables()
 }
@@ -145,6 +151,7 @@ func processOpts() {
 		"logger.debug":                     &Debug,
 		"logger.trace":                     &Trace,
 		"logger.nocolor":                   &NoColor,
+		"logger.docker_logging":            &DockerLogging,
 		"http.router.makerobots":           &MakeRobots,
 		"http.router.catchall":             &CatchAll,
 	}

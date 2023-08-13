@@ -15,6 +15,9 @@ func init() {
 	if home, err = os.UserHomeDir(); err != nil {
 		panic(err)
 	}
+	if len(defOpts) == 0 {
+		panic("default options map is empty")
+	}
 	defOpts["logger"]["directory"] = path.Join(home, ".local", "share", Title, "logs")
 	prefConfigLocation = path.Join(home, ".config", Title)
 }
@@ -30,6 +33,7 @@ var defOpts = map[string]map[string]interface{}{
 		"trace":             false,
 		"nocolor":           defNoColor,
 		"use_date_filename": true,
+		"docker_logging":    false,
 	},
 	"http": {
 		"use_unix_socket":         false,
