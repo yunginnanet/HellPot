@@ -8,7 +8,7 @@ require (
 	github.com/rs/zerolog v1.30.0
 	github.com/spf13/afero v1.9.5
 	github.com/spf13/viper v1.16.0
-	github.com/valyala/fasthttp v1.48.0
+	github.com/valyala/fasthttp v1.49.0
 	golang.org/x/term v0.11.0
 )
 
