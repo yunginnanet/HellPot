@@ -3,7 +3,7 @@ module github.com/yunginnanet/HellPot
 go 1.19
 
 require (
-	git.tcp.direct/kayos/common v0.8.6
+	git.tcp.direct/kayos/common v0.9.2
 	github.com/fasthttp/router v1.4.20
 	github.com/rs/zerolog v1.30.0
 	github.com/spf13/afero v1.9.5
