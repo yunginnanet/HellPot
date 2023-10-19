@@ -18,9 +18,7 @@ var (
 	logger         zerolog.Logger
 )
 
-// StartLogger instantiates an instance of our zerolog loggger so we can hook it in our main package.
-// While this does return a logger, it should not be used for additional retrievals of the logger. Use GetLogger()
-func StartLogger(pretty bool, targets ...io.Writer) zerolog.Logger {
+func prepLogDir() {
 	logDir = snek.GetString("logger.directory")
 	if !strings.HasSuffix(logDir, "/") {
 		logDir += "/"
@@ -29,7 +27,11 @@ func StartLogger(pretty bool, targets ...io.Writer) zerolog.Logger {
 		println("cannot create log directory: " + logDir + "(" + err.Error() + ")")
 		os.Exit(1)
 	}
+}
 
+// StartLogger instantiates an instance of our zerolog loggger so we can hook it in our main package.
+// While this does return a logger, it should not be used for additional retrievals of the logger. Use GetLogger().
+func StartLogger(pretty bool, targets ...io.Writer) zerolog.Logger {
 	logFileName := "HellPot"
 
 	if snek.GetBool("logger.use_date_filename") {
@@ -44,6 +46,7 @@ func StartLogger(pretty bool, targets ...io.Writer) zerolog.Logger {
 	case len(targets) > 0:
 		logFile = io.MultiWriter(targets...)
 	default:
+		prepLogDir()
 		CurrentLogFile = path.Join(logDir, logFileName+".log")
 		/* #nosec */
 		if logFile, err = os.OpenFile(CurrentLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666); err != nil {
