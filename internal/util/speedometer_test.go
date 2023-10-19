@@ -1,8 +1,11 @@
 package util
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"io"
+	"net"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -19,11 +22,12 @@ func (w *testWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func writeStuff(target io.Writer, count int) error {
+func writeStuff(t *testing.T, target io.Writer, count int) error {
+	t.Helper()
 	write := func() error {
 		_, err := target.Write([]byte("a"))
 		if err != nil {
-			return err
+			return fmt.Errorf("error writing: %w", err)
 		}
 		return nil
 	}
@@ -52,6 +56,7 @@ func Test_Speedometer(t *testing.T) {
 	}
 
 	isIt := func(want, have results) {
+		t.Helper()
 		if have.total != want.total {
 			t.Errorf("total: want %d, have %d", want.total, have.total)
 		}
@@ -61,24 +66,27 @@ func Test_Speedometer(t *testing.T) {
 		if have.rate != want.rate {
 			t.Errorf("rate: want %f, have %f", want.rate, have.rate)
 		}
-		if have.err != want.err {
+		if !errors.Is(have.err, want.err) {
 			t.Errorf("wantErr: want %v, have %v", want.err, have.err)
 		}
 	}
 
 	var (
 		errChan = make(chan error, 10)
-		err     error
-		cnt     int
 	)
 
 	t.Run("EarlyClose", func(t *testing.T) {
+		var (
+			err error
+			cnt int
+		)
+		t.Parallel()
 		sp, nerr := NewSpeedometer(&testWriter{t: t})
 		if nerr != nil {
 			t.Errorf("unexpected error: %v", nerr)
 		}
 		go func() {
-			errChan <- writeStuff(sp, -1)
+			errChan <- writeStuff(t, sp, -1)
 		}()
 		time.Sleep(1 * time.Second)
 		if closeErr := sp.Close(); closeErr != nil {
@@ -93,6 +101,11 @@ func Test_Speedometer(t *testing.T) {
 	})
 
 	t.Run("Basic", func(t *testing.T) {
+		var (
+			err error
+			cnt int
+		)
+		t.Parallel()
 		sp, nerr := NewSpeedometer(&testWriter{t: t})
 		if nerr != nil {
 			t.Errorf("unexpected error: %v", nerr)
@@ -108,17 +121,20 @@ func Test_Speedometer(t *testing.T) {
 	})
 
 	t.Run("ConcurrentWrites", func(t *testing.T) {
+		var (
+			err error
+		)
+
 		count := int64(0)
 		sp, nerr := NewSpeedometer(&testWriter{t: t})
 		if nerr != nil {
 			t.Errorf("unexpected error: %v", nerr)
 		}
 		wg := &sync.WaitGroup{}
+		wg.Add(100)
 		for i := 0; i < 100; i++ {
-			wg.Add(1)
 			go func() {
 				var counted int
-				var err error
 				counted, err = sp.Write([]byte("a"))
 				if err != nil {
 					t.Errorf("unexpected error: %v", err)
@@ -128,16 +144,21 @@ func Test_Speedometer(t *testing.T) {
 			}()
 		}
 		wg.Wait()
-		isIt(results{err: nil, written: 1, total: 100}, results{err: err, written: cnt, total: sp.Total()})
+		isIt(results{err: nil, written: 100, total: 100},
+			results{err: err, written: int(atomic.LoadInt64(&count)), total: sp.Total()})
 	})
 
 	t.Run("GottaGoFast", func(t *testing.T) {
+		t.Parallel()
+		var (
+			err error
+		)
 		sp, nerr := NewSpeedometer(&testWriter{t: t})
 		if nerr != nil {
 			t.Errorf("unexpected error: %v", nerr)
 		}
 		go func() {
-			errChan <- writeStuff(sp, -1)
+			errChan <- writeStuff(t, sp, -1)
 		}()
 		var count = 0
 		for sp.Running() {
@@ -164,7 +185,12 @@ func Test_Speedometer(t *testing.T) {
 
 	// test limiter with speedlimit
 	t.Run("CantGoFast", func(t *testing.T) {
+		t.Parallel()
 		t.Run("10BytesASecond", func(t *testing.T) {
+			t.Parallel()
+			var (
+				err error
+			)
 			sp, nerr := NewLimitedSpeedometer(&testWriter{t: t}, &SpeedLimit{
 				Burst:           10,
 				Frame:           time.Second,
@@ -189,6 +215,10 @@ func Test_Speedometer(t *testing.T) {
 		})
 
 		t.Run("1000BytesPer5SecondsMeasuredEvery5000Bytes", func(t *testing.T) {
+			t.Parallel()
+			var (
+				err error
+			)
 			sp, nerr := NewLimitedSpeedometer(&testWriter{t: t}, &SpeedLimit{
 				Burst:           1000,
 				Frame:           2 * time.Second,
@@ -228,6 +258,10 @@ func Test_Speedometer(t *testing.T) {
 
 	// test capped speedometer
 	t.Run("OnlyALittle", func(t *testing.T) {
+		t.Parallel()
+		var (
+			err error
+		)
 		sp, nerr := NewCappedSpeedometer(&testWriter{t: t}, 1024)
 		if nerr != nil {
 			t.Errorf("unexpected error: %v", nerr)
@@ -245,4 +279,113 @@ func Test_Speedometer(t *testing.T) {
 		}
 	})
 
+	t.Run("SynSynAckAck", func(t *testing.T) {
+		t.Parallel()
+		var (
+			server net.Listener
+			err    error
+		)
+		//goland:noinspection GoCommentLeadingSpace
+		if server, err = net.Listen("tcp", ":8080"); err != nil { // #nosec G102 - this is a unit test.
+			t.Fatalf("Failed to start server: %v", err)
+		}
+		defer func(server net.Listener) {
+			if cErr := server.Close(); cErr != nil {
+				t.Errorf("Failed to close server: %v", err)
+			}
+		}(server)
+
+		go func() {
+			var (
+				conn net.Conn
+				aErr error
+			)
+			if conn, aErr = server.Accept(); aErr != nil {
+				t.Errorf("Failed to accept connection: %v", err)
+			}
+
+			t.Logf("Accepted connection from %s", conn.RemoteAddr().String())
+
+			defer func(conn net.Conn) {
+				if cErr := conn.Close(); cErr != nil {
+					t.Errorf("Failed to close connection: %v", err)
+				}
+			}(conn)
+
+			speedLimit := &SpeedLimit{
+				Burst:           512,
+				Frame:           time.Second,
+				CheckEveryBytes: 1,
+				Delay:           10 * time.Millisecond,
+			}
+
+			var (
+				speedometer *Speedometer
+				sErr        error
+			)
+			if speedometer, sErr = NewCappedLimitedSpeedometer(conn, speedLimit, 4096); sErr != nil {
+				t.Errorf("Failed to create speedometer: %v", sErr)
+			}
+
+			buf := make([]byte, 1024)
+			for i := range buf {
+				targ := byte('E')
+				if i%2 == 0 {
+					targ = byte('e')
+				}
+				buf[i] = targ
+			}
+			for {
+				n, wErr := speedometer.Write(buf)
+				switch {
+				case errors.Is(wErr, io.EOF), errors.Is(wErr, ErrLimitReached):
+					return
+				case wErr != nil:
+					t.Errorf("Failed to write: %v", wErr)
+				case n != len(buf):
+					t.Errorf("Failed to write all bytes: %d", n)
+				default:
+					t.Logf("Wrote %d bytes", n)
+				}
+			}
+		}()
+
+		var (
+			client net.Conn
+			aErr   error
+		)
+
+		if client, aErr = net.Dial("tcp", "localhost:8080"); aErr != nil {
+			t.Fatalf("Failed to connect to server: %v", err)
+		}
+
+		defer func(client net.Conn) {
+			if clErr := client.Close(); clErr != nil {
+				t.Errorf("Failed to close client: %v", err)
+			}
+		}(client)
+
+		buf := &bytes.Buffer{}
+		startTime := time.Now()
+		n, cpErr := io.Copy(buf, client)
+		if cpErr != nil {
+			t.Errorf("Failed to copy: %v", cpErr)
+		}
+
+		duration := time.Since(startTime)
+		if buf.Len() == 0 || n == 0 {
+			t.Fatalf("No data received")
+		}
+
+		rate := measureRate(t, n, duration)
+
+		if rate > 512.0 {
+			t.Fatalf("Rate exceeded: got %f, expected <= 100.0", rate)
+		}
+	})
+}
+
+func measureRate(t *testing.T, received int64, duration time.Duration) float64 {
+	t.Helper()
+	return float64(received) / duration.Seconds()
 }
