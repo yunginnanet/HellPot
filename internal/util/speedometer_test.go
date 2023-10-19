@@ -47,6 +47,7 @@ func writeStuff(t *testing.T, target io.Writer, count int) error {
 	return nil
 }
 
+//nolint:funlen
 func Test_Speedometer(t *testing.T) {
 	type results struct {
 		total   int64
@@ -286,7 +287,7 @@ func Test_Speedometer(t *testing.T) {
 			err    error
 		)
 		//goland:noinspection GoCommentLeadingSpace
-		if server, err = net.Listen("tcp", ":8080"); err != nil { // #nosec G102 - this is a unit test.
+		if server, err = net.Listen("tcp", ":8080"); err != nil { // #nosec:G102 - this is a unit test.
 			t.Fatalf("Failed to start server: %v", err)
 		}
 		defer func(server net.Listener) {
