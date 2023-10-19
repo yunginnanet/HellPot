@@ -136,8 +136,9 @@ func Test_Speedometer(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			go func() {
 				var counted int
-				counted, err = sp.Write([]byte("a"))
-				if err != nil {
+				var gerr error
+				counted, gerr = sp.Write([]byte("a"))
+				if gerr != nil {
 					t.Errorf("unexpected error: %v", err)
 				}
 				atomic.AddInt64(&count, int64(counted))
