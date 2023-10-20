@@ -130,7 +130,7 @@ func Serve() error {
 
 	if !config.CatchAll {
 		for _, p := range config.Paths {
-			log.Trace().Str("caller", "router").Msg(p)
+			log.Trace().Str("caller", "router").Msgf("Add route: %s", p)
 			r.GET(fmt.Sprintf("/%s", p), hellPot)
 		}
 	} else {

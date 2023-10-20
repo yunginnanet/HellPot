@@ -1,0 +1,18 @@
+[deception]
+  server_name = "nginx"
+
+[http]
+  bind_addr = "0.0.0.0"
+  bind_port = "8080"
+  real_ip_header = 'X-Real-IP'
+  uagent_string_blacklist = ["Cloudflare-Traffic-Manager", "curl"]
+
+  [http.router]
+    catchall = true  # /robots.txt assumed to be served elsewhence
+
+[logger]
+  debug = false
+  trace = false
+  directory = "/logs/"
+  nocolor = true
+  use_date_filename = true

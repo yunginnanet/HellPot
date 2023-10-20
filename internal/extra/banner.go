@@ -93,7 +93,7 @@ func bannerFail(errs ...error) {
 func Banner() {
 	//goland:noinspection GoBoolExpressions
 	if runtime.GOOS == "windows" || config.NoColor {
-		println(config.Title + " " + config.Version)
+		_, _ = os.Stdout.Write([]byte(config.Title + " " + config.Version + "\n\n"))
 		return
 	}
 	printBanner()

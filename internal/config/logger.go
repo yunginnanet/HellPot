@@ -1,6 +1,7 @@
 package config
 
 import (
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -12,14 +13,14 @@ import (
 var (
 	// CurrentLogFile is used for accessing the location of the currently used log file across packages.
 	CurrentLogFile string
-	logFile        *os.File
+	logFile        io.Writer
 	logDir         string
 	logger         zerolog.Logger
 )
 
 // StartLogger instantiates an instance of our zerolog loggger so we can hook it in our main package.
-// While this does return a logger, it should not be used for additional retrievals of the logger. Use GetLogger().
-func StartLogger() zerolog.Logger {
+// While this does return a logger, it should not be used for additional retrievals of the logger. Use GetLogger()
+func StartLogger(pretty bool, targets ...io.Writer) zerolog.Logger {
 	logDir = snek.GetString("logger.directory")
 	if !strings.HasSuffix(logDir, "/") {
 		logDir += "/"
@@ -37,18 +38,27 @@ func StartLogger() zerolog.Logger {
 		logFileName = logFileName + "_" + tn
 	}
 
-	CurrentLogFile = path.Join(logDir, logFileName+".log")
-
 	var err error
 
-	logFile, err = os.OpenFile(CurrentLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666) // #nosec G304 G302 -- we are not using user input to create the file. 	// nolint:lll
-	if err != nil {
-		println("cannot create log file: " + err.Error())
-		os.Exit(1)
+	switch {
+	case len(targets) > 0:
+		logFile = io.MultiWriter(targets...)
+	default:
+		CurrentLogFile = path.Join(logDir, logFileName+".log")
+		/* #nosec */
+		if logFile, err = os.OpenFile(CurrentLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666); err != nil {
+			println("cannot create log file: " + err.Error())
+			os.Exit(1)
+		}
 	}
 
-	multi := zerolog.MultiLevelWriter(zerolog.ConsoleWriter{NoColor: NoColor, Out: os.Stdout}, logFile)
-	logger = zerolog.New(multi).With().Timestamp().Logger()
+	var logWriter = logFile
+
+	if pretty {
+		logWriter = zerolog.MultiLevelWriter(zerolog.ConsoleWriter{NoColor: NoColor, Out: os.Stdout}, logFile)
+	}
+
+	logger = zerolog.New(logWriter).With().Timestamp().Logger()
 	return logger
 }
 
