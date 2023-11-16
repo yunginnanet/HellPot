@@ -111,7 +111,7 @@ In the event of a missing configuration file, HellPot will attempt to place it's
 
 ## Example Web Server Config (nginx)  
     
-```
+```nginx
 location '/robots.txt' {
 	proxy_set_header Host $host;
 	proxy_set_header X-Real-IP $remote_addr;
@@ -133,7 +133,7 @@ All nonexisting URLs are being reverse proxied to a HellPot instance on localhos
 * Requests on nonexisting URLs cause a HTTP Error 404, which content is served by HellPot
 * URLs under the "/.well-known/" suffix are excluded.
 
-```
+```apache
 <VirtualHost yourserver>
     ErrorDocument 400 "/content/400"
     ErrorDocument 403 "/content/403"
