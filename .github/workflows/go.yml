@@ -2,9 +2,9 @@ name: Vibe Check
 
 on:
   push:
-    branches: [ master, development ]
+    branches: [ main, development ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.19
+          go-version: 1.21
       - name: go vet -v ./...
         run: go vet -v ./...
       - name: gosec ./...
