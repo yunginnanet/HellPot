@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	git.tcp.direct/kayos/common v0.9.6
-	github.com/fasthttp/router v1.4.21
+	github.com/fasthttp/router v1.4.22
 	github.com/rs/zerolog v1.31.0
 	github.com/spf13/afero v1.10.0
 	github.com/spf13/viper v1.17.0
