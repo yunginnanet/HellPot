@@ -135,8 +135,7 @@ func Serve() error {
 		}
 	} else {
 		log.Trace().Msg("Catch-All mode enabled...")
-		r.GET("/", hellPot)
-		r.GET("/{path}", hellPot)
+    r.GET("/{path:*}", hellPot)
 	}
 
 	srv := getSrv(r)
