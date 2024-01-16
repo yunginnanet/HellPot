@@ -55,7 +55,7 @@ func StartLogger(pretty bool, targets ...io.Writer) zerolog.Logger {
 	var logWriter = logFile
 
 	if pretty {
-		logWriter = zerolog.MultiLevelWriter(zerolog.ConsoleWriter{NoColor: NoColor, Out: os.Stdout}, logFile)
+		logWriter = zerolog.MultiLevelWriter(zerolog.ConsoleWriter{TimeFormat: ConsoleTimeFormat, NoColor: NoColor, Out: os.Stdout}, logFile)
 	}
 
 	logger = zerolog.New(logWriter).With().Timestamp().Logger()
