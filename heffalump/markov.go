@@ -22,8 +22,9 @@ func init() {
 	if len(src) < 1 {
 		panic("failed to unpack source")
 	}
+
 	DefaultMarkovMap = MakeMarkovMap(strings.NewReader(src))
-	DefaultHeffalump = NewHeffalump(DefaultMarkovMap, 100*1<<10)
+	DefaultHeffalump = NewHeffalump(DefaultMarkovMap, DefaultBuffSize)
 }
 
 // ScanHTML is a basic split function for a Scanner that returns each
