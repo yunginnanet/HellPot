@@ -15,7 +15,10 @@ import (
 var log = config.GetLogger()
 
 // DefaultHeffalump represents a Heffalump type
-var DefaultHeffalump *Heffalump
+var (
+	DefaultHeffalump *Heffalump
+	DefaultBuffSize  int = 100 * 1 << 10
+)
 
 // Heffalump represents our buffer pool and markov map from Heffalump
 type Heffalump struct {
