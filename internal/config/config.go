@@ -133,11 +133,12 @@ func loadCustomConfig(path string) {
 func processOpts() {
 	// string options and their exported variables
 	stringOpt := map[string]*string{
-		"http.bind_addr":        &HTTPBind,
-		"http.bind_port":        &HTTPPort,
-		"http.real_ip_header":   &HeaderName,
-		"logger.directory":      &logDir,
-		"deception.server_name": &FakeServerName,
+		"http.bind_addr":             &HTTPBind,
+		"http.bind_port":             &HTTPPort,
+		"http.real_ip_header":        &HeaderName,
+		"logger.directory":           &logDir,
+		"logger.console_time_format": &ConsoleTimeFormat,
+		"deception.server_name":      &FakeServerName,
 	}
 	// string slice options and their exported variables
 	strSliceOpt := map[string]*[]string{

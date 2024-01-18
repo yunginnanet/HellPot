@@ -1,6 +1,8 @@
 package config
 
-import "runtime/debug"
+import (
+	"runtime/debug"
+)
 
 // Title is the name of the application used throughout the configuration process.
 const Title = "HellPot"
@@ -39,6 +41,8 @@ var (
 	// CatchAll when true will cause HellPot to respond to all paths.
 	// Note that this will override MakeRobots.
 	CatchAll bool
+	// ConsoleTimeFormat sets the time format for the console. The string is passed to time.Format() down the line.
+	ConsoleTimeFormat string
 )
 
 // "http"
