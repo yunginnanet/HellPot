@@ -19,7 +19,7 @@ import (
 
 var (
 	log              *zerolog.Logger
-	hellpotHeffalump = heffalump.DefaultHeffalump
+	hellpotHeffalump *heffalump.Heffalump
 )
 
 func getRealRemote(ctx *fasthttp.RequestCtx) string {
@@ -139,6 +139,9 @@ func Serve() error {
 
 		markovMap := heffalump.MakeMarkovMap(strings.NewReader(src))
 		hellpotHeffalump = heffalump.NewHeffalump(markovMap, heffalump.DefaultBuffSize)
+	} else {
+		log.Info().Msg("Using default source text")
+		hellpotHeffalump = heffalump.NewDefaultHeffalump()
 	}
 
 	l := config.HTTPBind + ":" + config.HTTPPort
