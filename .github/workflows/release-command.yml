@@ -40,6 +40,8 @@ jobs:
         pre_command: export CGO_ENABLED=0
         ldflags: -s -w -X main.version=${{ github.event.inputs.tag }}
         release_tag: ${{ github.event.inputs.tag }}
+        md5sum: FALSE
+        sha256sum: TRUE
     - name: Add reaction
       uses: peter-evans/create-or-update-comment@v3
       with:
