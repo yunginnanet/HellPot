@@ -22,7 +22,7 @@ func argParse() {
 			continue
 		}
 		switch arg {
-		case "-h":
+		case "-h", "--help":
 			CLI.printUsage()
 		case "-c", "--config":
 			if len(os.Args) < i+2 {
