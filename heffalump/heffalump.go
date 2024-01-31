@@ -65,6 +65,9 @@ func (h *Heffalump) WriteHell(bw *bufio.Writer, cType ContentType) (int64, error
 
 	switch cType {
 	case PlainText:
+		if _, err = bw.WriteString("# Chapter 1\n"); err != nil {
+			return n, err
+		}
 		break
 	case HTML:
 		if _, err = bw.WriteString("<html>\n<body>\n"); err != nil {
