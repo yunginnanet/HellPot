@@ -1,20 +1,20 @@
 # HellPot
-   
-   [![GoDoc](https://godoc.org/github.com/yunginnanet/HellPot?status.svg)](https://godoc.org/github.com/yunginnanet/HellPot) [![Go Report Card](https://goreportcard.com/badge/github.com/yunginnanet/HellPot)](https://goreportcard.com/report/github.com/yunginnanet/HellPot) [![IRC](https://img.shields.io/badge/ircd.chat-%23tcpdirect-blue.svg)](ircs://ircd.chat:6697/#tcpdirect) [![Mentioned in Awesome Honeypots](https://awesome.re/mentioned-badge.svg)](https://github.com/paralax/awesome-honeypots)
-   
-## Summary  
-  
+
+[![GoDoc](https://godoc.org/github.com/yunginnanet/HellPot?status.svg)](https://godoc.org/github.com/yunginnanet/HellPot) [![Go Report Card](https://goreportcard.com/badge/github.com/yunginnanet/HellPot)](https://goreportcard.com/report/github.com/yunginnanet/HellPot) [![IRC](https://img.shields.io/badge/ircd.chat-%23tcpdirect-blue.svg)](ircs://ircd.chat:6697/#tcpdirect) [![Mentioned in Awesome Honeypots](https://awesome.re/mentioned-badge.svg)](https://github.com/paralax/awesome-honeypots)
+
+## Summary
+
 HellPot is an endless honeypot based on [Heffalump](https://github.com/carlmjohnson/heffalump) that sends unruly HTTP bots to hell.
 
 Notably it implements a [toml configuration file](https://github.com/spf13/viper), has [JSON logging](https://github.com/rs/zerolog), and comes with significant performance gains.
-  
- ![Exploding Heffalump](https://tcp.ac/i/H8O9M.gif)
+
+![Exploding Heffalump](https://tcp.ac/i/H8O9M.gif)
 
 ## Grave Consequences
 
-Clients (hopefully bots) that disregard `robots.txt` and connect to your instance of HellPot will **suffer eternal consequences**. 
+Clients (hopefully bots) that disregard `robots.txt` and connect to your instance of HellPot will **suffer eternal consequences**.
 
-HellPot will send an infinite stream of data that is *just close enough* to being a real website that they might just stick around until their soul is ripped apart and they cease to exist.
+HellPot will send an infinite stream of data that is _just close enough_ to being a real website that they might just stick around until their soul is ripped apart and they cease to exist.
 
 Under the hood of this eternal suffering is a markov engine that chucks bits and pieces of [The Birth of Tragedy (Hellenism and Pessimism)](https://www.gutenberg.org/files/51356/51356-h/51356-h.htm) by Friedrich Nietzsche at the client using [fasthttp](https://github.com/valyala/fasthttp).
 
@@ -30,15 +30,15 @@ HellPot uses [go modules](https://go.dev/blog/using-go-modules). This should mak
 
 4 ) `make`
 
-5 ) *Consider the potential grave consequences of your actions.*
+5 ) _Consider the potential grave consequences of your actions._
 
 ## Usage
 
 ### YOLO Method:
 
-In the event of a missing configuration file, HellPot will attempt to place it's default config in **$HOME/.config/HellPot/config.toml**. This allows irresponsible souls to begin raining hellfire with ease, ***immediately***:
+In the event of a missing configuration file, HellPot will attempt to place it's default config in **$HOME/.config/HellPot/config.toml**. This allows irresponsible souls to begin raining hellfire with ease, **_immediately_**:
 
-1 ) Download a [compiled release](https://github.com/yunginnanet/HellPot/releases/latest) 
+1 ) Download a [compiled release](https://github.com/yunginnanet/HellPot/releases/latest)
 
 2 ) Run binary and immedidately begin sending clients directly to hell.
 
@@ -58,7 +58,7 @@ In the event of a missing configuration file, HellPot will attempt to place it's
 
 666 ) 𝙏͘͝𝙝̓̓͛𝙚͑̈́̀ 𝙨͆͠͝𝙠͑̾͌𝙮̽͌͆ 𝙞̓̔̔𝙨͒͐͝ 𝙛͑̈́̚𝙖͛͒𝙡͑͆̽𝙡̾̚̚𝙞͋̒̒𝙣̾͛͝𝙜͒̒̀.́̔͝​
 
-## Configuration Reference 
+## Configuration Reference
 
 ```toml
 [deception]
@@ -70,7 +70,7 @@ In the event of a missing configuration file, HellPot will attempt to place it's
   bind_addr = "127.0.0.1"
   bind_port = "8080"
 
-  # header name containing clients real IP, for reverse proxy deployments  
+  # header name containing clients real IP, for reverse proxy deployments
   real_ip_header = 'X-Real-IP'
 
   # this contains a list of blacklisted useragent strings. (case sensitive)
@@ -95,7 +95,7 @@ In the event of a missing configuration file, HellPot will attempt to place it's
   debug = true
   # extra verbose (-vv)
   trace = false
-  # JSON log files will be stored in the below directory. 
+  # JSON log files will be stored in the below directory.
   directory = "/home/kayos/.local/share/HellPot/logs/"
   # disable all color in console output. when using Windows this will default to true.
   nocolor = false
@@ -107,16 +107,15 @@ In the event of a missing configuration file, HellPot will attempt to place it's
   max_workers = 256
   restrict_concurrency = false
 ```
-  
 
-## Example Web Server Config (nginx)  
-    
+## Example Web Server Config (nginx)
+
 ```nginx
 location '/robots.txt' {
 	proxy_set_header Host $host;
 	proxy_set_header X-Real-IP $remote_addr;
 	proxy_pass http://127.0.0.1:8080$request_uri;
-}  
+}
 
 location '/wp-login.php' {
 	proxy_set_header Host $host;
@@ -124,14 +123,15 @@ location '/wp-login.php' {
 	proxy_pass http://127.0.0.1:8080$request_uri;
 }
 ```
-## Example Web Server Config (apache)  
+
+## Example Web Server Config (apache)
 
 All nonexisting URLs are being reverse proxied to a HellPot instance on localhost, which is set to catchall. Traffic served by HellPot is rate limited to 5 KiB/s.
 
-* Create your normal robots.txt and usual content. Also create the fake Errordocument directory and files (files can be empty). In the example, the directory is "/content/"
-* A request on a URL with an existing handler (f.e. a file) will be handled by apache
-* Requests on nonexisting URLs cause a HTTP Error 404, which content is served by HellPot
-* URLs under the "/.well-known/" suffix are excluded.
+- Create your normal robots.txt and usual content. Also create the fake Errordocument directory and files (files can be empty). In the example, the directory is "/content/"
+- A request on a URL with an existing handler (f.e. a file) will be handled by apache
+- Requests on nonexisting URLs cause a HTTP Error 404, which content is served by HellPot
+- URLs under the "/.well-known/" suffix are excluded.
 
 ```apache
 <VirtualHost yourserver>
@@ -160,3 +160,8 @@ All nonexisting URLs are being reverse proxied to a HellPot instance on localhos
 
 </VirtualHost>
 ```
+
+## Related Suffering
+
+- https://github.com/ginger51011/pandoras_pot
+  - A HellPot inspired HTTP honeypot to punish and educate unruly web crawlers, written in Rust (🚀)
