@@ -30,12 +30,12 @@ func argParse() {
 				os.Exit(1)
 			}
 			loadCustomConfig(os.Args[i+1])
-		case "-b", "--book":
+		case "-g", "--grimoire":
 			if len(os.Args) < i+2 {
-				println("missing book file after -b/--book")
+				println("missing source of suffering file after -g/--grimoire")
 				os.Exit(1)
 			}
-			BookFilename = os.Args[i+1]
+			Grimoire = os.Args[i+1]
 			UseCustomHeffalump = true
 		default:
 			continue

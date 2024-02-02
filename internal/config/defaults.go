@@ -86,7 +86,7 @@ func gen(memfs afero.Fs) {
 		println(err.Error())
 		os.Exit(1)
 	}
-	print("default configuration successfully written to " + target)
+	println("default configuration successfully written to " + target)
 	os.Exit(0)
 }
 

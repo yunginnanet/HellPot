@@ -38,7 +38,7 @@ func init() {
 
 	extra.Banner()
 
-	log.Info().Str("caller", "config").Str("file", config.ConfigFilename).Msg(config.ConfigFilename)
+	log.Info().Str("caller", "config").Str("file", config.Filename).Msg(config.Filename)
 	log.Info().Str("caller", "logger").Msg(config.CurrentLogFile)
 	log.Debug().Str("caller", "logger").Msg("debug enabled")
 	log.Trace().Str("caller", "logger").Msg("trace enabled")
