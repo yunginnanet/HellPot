@@ -29,12 +29,12 @@ var (
 	Trace bool
 	// Debug is the value of our debug (verbose) on/off toggle as per the current configuration.
 	Debug bool
-	// ConfigFilename returns the current location of our toml config file.
-	ConfigFilename string
+	// Filename returns the current location of our toml config file.
+	Filename string
 	// UseCustomHeffalump decides if a custom Heffalump is to be used
 	UseCustomHeffalump = false
-	// BookFilename returns the current location of a possible book file
-	BookFilename string
+	// Grimoire returns the current location of a possible source of suffering file
+	Grimoire string
 )
 
 func writeConfig() {
@@ -44,9 +44,9 @@ func writeConfig() {
 			os.Exit(1)
 		}
 	}
-	ConfigFilename = prefConfigLocation + "/" + "config.toml"
-	if err := snek.SafeWriteConfigAs(ConfigFilename); err != nil {
-		fmt.Println("Failed to write new configuration file to '" + ConfigFilename + "': " + err.Error())
+	Filename = prefConfigLocation + "/" + "config.toml"
+	if err := snek.SafeWriteConfigAs(Filename); err != nil {
+		fmt.Println("Failed to write new configuration file to '" + Filename + "': " + err.Error())
 		os.Exit(1)
 	}
 }
@@ -75,8 +75,8 @@ func Init() {
 		writeConfig()
 	}
 
-	if len(ConfigFilename) < 1 {
-		ConfigFilename = snek.ConfigFileUsed()
+	if len(Filename) < 1 {
+		Filename = snek.ConfigFileUsed()
 	}
 
 	snek.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
@@ -106,9 +106,9 @@ func loadCustomConfig(path string) {
 		os.Exit(1)
 	}
 
-	ConfigFilename, err = filepath.Abs(path)
-	if len(ConfigFilename) < 1 || err != nil {
-		ConfigFilename = path
+	Filename, err = filepath.Abs(path)
+	if len(Filename) < 1 || err != nil {
+		Filename = path
 	}
 
 	defer func(f *os.File) {

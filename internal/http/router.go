@@ -124,22 +124,23 @@ func getSrv(r *router.Router) fasthttp.Server {
 func Serve() error {
 	log = config.GetLogger()
 
-	if config.UseCustomHeffalump {
-		content, err := os.ReadFile(config.BookFilename)
+	switch config.UseCustomHeffalump {
+	case true:
+		content, err := os.ReadFile(config.Grimoire)
 		if err != nil {
 			panic(err)
 		}
 		// Wasteful, but only done once at startup
 		src := string(content)
-		log.Info().Msgf("Using custom book file '%s'", config.BookFilename)
+		log.Info().Msgf("Using custom grimoire file '%s'", config.Grimoire)
 
 		if len(src) < 1 {
-			panic("book file was empty!")
+			panic("grimoire file was empty!")
 		}
 
 		markovMap := heffalump.MakeMarkovMap(strings.NewReader(src))
 		hellpotHeffalump = heffalump.NewHeffalump(markovMap, heffalump.DefaultBuffSize)
-	} else {
+	default:
 		log.Info().Msg("Using default source text")
 		hellpotHeffalump = heffalump.NewDefaultHeffalump()
 	}

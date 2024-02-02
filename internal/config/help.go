@@ -22,8 +22,8 @@ var CLI = help{
 		1: {0: "--nocolor", 1: "disable color and banner"},
 		2: {0: "--banner", 1: "show banner + version and exit"},
 		3: {0: "--genconfig", 1: "write default config to " + Title + ".toml then exit"},
-		4: {0: "-b, --book", 1: "<file>", 2: "Specify a custom file used for text generation"},
-		5: {0: "-h, --help", 1: "show this help and exit"},
+		4: {0: "-g, --grimoire", 1: "<file>", 2: "Specify a custom file used for text generation"},
+		5: {0: "-h,--help", 1: "show this help and exit"},
 	},
 	out: os.Stdout,
 }

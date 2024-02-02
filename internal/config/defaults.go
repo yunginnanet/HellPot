@@ -1,14 +1,26 @@
 package config
 
 import (
+	"fmt"
 	"io"
 	"os"
+	"path"
 	"runtime"
-	"time"
 
-	"github.com/knadh/koanf/parsers/toml"
 	"github.com/spf13/afero"
 )
+
+func init() {
+	var err error
+	if home, err = os.UserHomeDir(); err != nil {
+		panic(err)
+	}
+	if len(defOpts) == 0 {
+		panic("default options map is empty")
+	}
+	defOpts["logger"]["directory"] = path.Join(home, ".local", "share", Title, "logs")
+	prefConfigLocation = path.Join(home, ".config", Title)
+}
 
 var (
 	configSections = []string{"logger", "http", "performance", "deception", "ssh"}
@@ -17,12 +29,11 @@ var (
 
 var defOpts = map[string]map[string]interface{}{
 	"logger": {
-		"debug":               true,
-		"trace":               false,
-		"nocolor":             defNoColor,
-		"use_date_filename":   true,
-		"docker_logging":      false,
-		"console_time_format": time.Kitchen,
+		"debug":             true,
+		"trace":             false,
+		"nocolor":           defNoColor,
+		"use_date_filename": true,
+		"docker_logging":    false,
 	},
 	"http": {
 		"use_unix_socket":         false,
@@ -54,28 +65,28 @@ var defOpts = map[string]map[string]interface{}{
 }
 
 func gen(memfs afero.Fs) {
-	var (
-		dat []byte
-		err error
-		f   afero.File
-	)
-	if dat, err = snek.Marshal(toml.Parser()); err != nil {
+	target := fmt.Sprintf("%s.toml", Title)
+	if err := snek.SafeWriteConfigAs("config.toml"); err != nil {
+		print(err.Error())
+		os.Exit(1)
+	}
+	var f afero.File
+	var err error
+	f, err = memfs.Open("config.toml")
+	if err != nil {
 		println(err.Error())
 		os.Exit(1)
 	}
-	if f, err = memfs.Create("config.toml"); err != nil {
+	nf, err := os.Create(target) // #nosec G304
+	if err != nil {
 		println(err.Error())
 		os.Exit(1)
 	}
-	var n int
-	if n, err = f.Write(dat); err != nil || n != len(dat) {
-		if err == nil {
-			err = io.ErrShortWrite
-		}
+	if _, err = io.Copy(nf, f); err != nil {
 		println(err.Error())
 		os.Exit(1)
 	}
-	println("Default config written to config.toml")
+	println("default configuration successfully written to " + target)
 	os.Exit(0)
 }
 
@@ -86,25 +97,10 @@ func setDefaults() {
 		defNoColor = true
 	}
 	for _, def := range configSections {
-		for key, val := range defOpts[def] {
-			if _, ok := val.(map[string]interface{}); !ok {
-				if err := snek.Set(def+"."+key, val); err != nil {
-					println(err.Error())
-					os.Exit(1)
-				}
-				continue
-			}
-			for k, v := range val.(map[string]interface{}) {
-				if err := snek.Set(def+"."+key+"."+k, v); err != nil {
-					println(err.Error())
-					os.Exit(1)
-				}
-			}
-			continue
-		}
+		snek.SetDefault(def, defOpts[def])
 	}
-
 	if GenConfig {
+		snek.SetFs(memfs)
 		gen(memfs)
 	}
 }

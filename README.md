@@ -17,7 +17,7 @@ Clients (hopefully bots) that disregard `robots.txt` and connect to your instanc
 
 HellPot will send an infinite stream of data that is _just close enough_ to being a real website that they might just stick around until their soul is ripped apart and they cease to exist.
 
-Under the hood of this eternal suffering is a markov engine that chucks bits and pieces of [The Birth of Tragedy (Hellenism and Pessimism)](https://www.gutenberg.org/files/51356/51356-h/51356-h.htm) by Friedrich Nietzsche at the client using [fasthttp](https://github.com/valyala/fasthttp), or optionally your (least?) favorite text using the `-b`/`--book` flag.
+Under the hood of this eternal suffering is a markov engine that chucks bits and pieces of [The Birth of Tragedy (Hellenism and Pessimism)](https://www.gutenberg.org/files/51356/51356-h/51356-h.htm) by Friedrich Nietzsche at the client using [fasthttp](https://github.com/valyala/fasthttp), or optionally you may synchronize HellPot with your nightmares by using the `-g`/`--grimoire` flag
 
 ## Building From Source
 
