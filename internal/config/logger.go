@@ -45,8 +45,9 @@ func StartLogger(pretty bool, targets ...io.Writer) zerolog.Logger {
 		logFile = io.MultiWriter(targets...)
 	default:
 		CurrentLogFile = path.Join(logDir, logFileName+".log")
-		/* #nosec */
-		if logFile, err = os.OpenFile(CurrentLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666); err != nil {
+
+		logFile, err = os.OpenFile(CurrentLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666) // #nosec G304 G302
+		if err != nil {
 			println("cannot create log file: " + err.Error())
 			os.Exit(1)
 		}
