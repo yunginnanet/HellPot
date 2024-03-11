@@ -22,7 +22,7 @@ func argParse() {
 			continue
 		}
 		switch arg {
-		case "-h":
+		case "-h", "--help":
 			CLI.printUsage()
 		case "-c", "--config":
 			if len(os.Args) < i+2 {
@@ -30,6 +30,13 @@ func argParse() {
 				os.Exit(1)
 			}
 			loadCustomConfig(os.Args[i+1])
+		case "-g", "--grimoire":
+			if len(os.Args) < i+2 {
+				println("missing source of suffering file after -g/--grimoire")
+				os.Exit(1)
+			}
+			Grimoire = os.Args[i+1]
+			UseCustomHeffalump = true
 		default:
 			continue
 		}
