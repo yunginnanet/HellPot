@@ -36,8 +36,16 @@ func NewHeffalump(mm MarkovMap, buffsize int) *Heffalump {
 	}
 }
 
+type ContentType int
+
+const (
+	PlainText ContentType = iota
+	HTML
+	JSON
+)
+
 // WriteHell writes markov chain heffalump hell to the provided io.Writer
-func (h *Heffalump) WriteHell(bw *bufio.Writer) (int64, error) {
+func (h *Heffalump) WriteHell(bw *bufio.Writer, cType ContentType) (int64, error) {
 	var n int64
 	var err error
 
@@ -50,8 +58,24 @@ func (h *Heffalump) WriteHell(bw *bufio.Writer) (int64, error) {
 	buf := h.pool.Get().([]byte)
 	defer h.pool.Put(buf)
 
-	if _, err = bw.WriteString("<html>\n<body>\n"); err != nil {
-		return n, err
+	switch cType {
+	case PlainText:
+		if _, err = bw.WriteString("# Chapter 1\n"); err != nil {
+			return n, err
+		}
+		break
+	case HTML:
+		if _, err = bw.WriteString("<html>\n<body>\n"); err != nil {
+			return n, err
+		}
+		break
+	case JSON:
+		if _, err = bw.WriteString("[\""); err != nil {
+			return n, err
+		}
+		break
+	default:
+		panic("unhandled default case")
 	}
 	if n, err = io.CopyBuffer(bw, h.mm, buf); err != nil {
 		return n, nil
