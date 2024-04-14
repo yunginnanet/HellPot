@@ -31,6 +31,10 @@ var (
 	Debug bool
 	// Filename returns the current location of our toml config file.
 	Filename string
+	// UseCustomHeffalump decides if a custom Heffalump is to be used
+	UseCustomHeffalump = false
+	// Grimoire returns the current location of a possible source of suffering file
+	Grimoire string
 )
 
 func writeConfig() {

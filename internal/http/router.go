@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net/http"
+	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -16,7 +17,10 @@ import (
 	"github.com/yunginnanet/HellPot/internal/config"
 )
 
-var log *zerolog.Logger
+var (
+	log              *zerolog.Logger
+	hellpotHeffalump *heffalump.Heffalump
+)
 
 func getRealRemote(ctx *fasthttp.RequestCtx) string {
 	xrealip := string(ctx.Request.Header.Peek(config.HeaderName))
@@ -61,7 +65,7 @@ func hellPot(ctx *fasthttp.RequestCtx) {
 		var wn int64
 
 		for {
-			wn, err = heffalump.DefaultHeffalump.WriteHell(bw)
+			wn, err = hellpotHeffalump.WriteHell(bw)
 			n += wn
 			if err != nil {
 				slog.Trace().Err(err).Msg("END_ON_ERR")
@@ -74,7 +78,6 @@ func hellPot(ctx *fasthttp.RequestCtx) {
 			Dur("DURATION", time.Since(s)).
 			Msg("FINISH")
 	})
-
 }
 
 func getSrv(r *router.Router) fasthttp.Server {
@@ -120,6 +123,28 @@ func getSrv(r *router.Router) fasthttp.Server {
 // Serve starts our HTTP server and request router
 func Serve() error {
 	log = config.GetLogger()
+
+	switch config.UseCustomHeffalump {
+	case true:
+		content, err := os.ReadFile(config.Grimoire)
+		if err != nil {
+			panic(err)
+		}
+		// Wasteful, but only done once at startup
+		src := string(content)
+		log.Info().Msgf("Using custom grimoire file '%s'", config.Grimoire)
+
+		if len(src) < 1 {
+			panic("grimoire file was empty!")
+		}
+
+		markovMap := heffalump.MakeMarkovMap(strings.NewReader(src))
+		hellpotHeffalump = heffalump.NewHeffalump(markovMap, heffalump.DefaultBuffSize)
+	default:
+		log.Info().Msg("Using default source text")
+		hellpotHeffalump = heffalump.NewDefaultHeffalump()
+	}
+
 	l := config.HTTPBind + ":" + config.HTTPPort
 
 	r := router.New()

@@ -11,10 +11,8 @@ import (
 	"git.tcp.direct/kayos/common/squish"
 )
 
-var DefaultMarkovMap MarkovMap
-
-func init() {
-	// DefaultMarkovMap is a Markov chain based on src.
+// NewDefaultMarkovMap creates a new MarkovMap from the default source text.
+func NewDefaultMarkovMap() MarkovMap {
 	src, err := squish.UnpackStr(srcGz)
 	if err != nil {
 		panic(err)
@@ -22,8 +20,8 @@ func init() {
 	if len(src) < 1 {
 		panic("failed to unpack source")
 	}
-	DefaultMarkovMap = MakeMarkovMap(strings.NewReader(src))
-	DefaultHeffalump = NewHeffalump(DefaultMarkovMap, 100*1<<10)
+
+	return MakeMarkovMap(strings.NewReader(src))
 }
 
 // ScanHTML is a basic split function for a Scanner that returns each
