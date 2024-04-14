@@ -27,7 +27,7 @@ jobs:
             goos: windows
     steps:
     - uses: actions/checkout@v4
-    - uses: wangyoucao577/go-release-action@v1.42
+    - uses: wangyoucao577/go-release-action@v1.47
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
@@ -40,8 +40,10 @@ jobs:
         pre_command: export CGO_ENABLED=0
         ldflags: -s -w -X main.version=${{ github.event.inputs.tag }}
         release_tag: ${{ github.event.inputs.tag }}
+        md5sum: FALSE
+        sha256sum: TRUE
     - name: Add reaction
-      uses: peter-evans/create-or-update-comment@v3
+      uses: peter-evans/create-or-update-comment@v4
       with:
         token: ${{ secrets.PAT }}
         repository: ${{ github.event.inputs.repository }}

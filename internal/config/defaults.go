@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"time"
 
 	"github.com/spf13/afero"
 )
@@ -29,11 +30,12 @@ var (
 
 var defOpts = map[string]map[string]interface{}{
 	"logger": {
-		"debug":             true,
-		"trace":             false,
-		"nocolor":           defNoColor,
-		"use_date_filename": true,
-		"docker_logging":    false,
+		"debug":               true,
+		"trace":               false,
+		"nocolor":             defNoColor,
+		"use_date_filename":   true,
+		"docker_logging":      false,
+		"console_time_format": time.Kitchen,
 	},
 	"http": {
 		"use_unix_socket":         false,
