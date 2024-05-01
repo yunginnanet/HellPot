@@ -2,18 +2,18 @@ name: Build and Release
 
 on:
   release:
-    types: [created]
+    types: [created, published, released]
   workflow_dispatch:
-    inputs:
-      repository:
-        description: "The repository from which the slash command was dispatched"
-        required: true
-      comment-id:
-        description: "The comment-id of the slash command"
-        required: true
-      tag:
-        description: "The tag to be released"
-        required: true
+#    inputs:
+#      repository:
+#        description: "The repository from which the slash command was dispatched"
+#        required: true
+#      comment-id:
+#        description: "The comment-id of the slash command"
+#        required: true
+#      tag:
+#        description: "The tag to be released"
+#        required: true
 
 jobs:
   release:
@@ -40,14 +40,14 @@ jobs:
           extra_files: LICENSE README.md
           build_flags: -trimpath
           pre_command: export CGO_ENABLED=0
-          ldflags: -s -w -X main.version=${{ github.event.inputs.tag }}
-          release_tag: ${{ github.event.inputs.tag }}
+          ldflags: -s -w -X main.version=${{ github.ref }}
+          release_tag: ${{ github.ref }}
           md5sum: FALSE
           sha256sum: TRUE
-      - name: Add reaction
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          token: ${{ secrets.PAT }}
-          repository: ${{ github.event.inputs.repository }}
-          comment-id: ${{ github.event.inputs.comment-id }}
-          reaction-type: hooray
+#      - name: Add reaction
+#        uses: peter-evans/create-or-update-comment@v4
+#        with:
+#          token: ${{ secrets.PAT }}
+#          repository: ${{ github.repository }}
+#          comment-id: ${{ github.event.inputs.comment-id }}
+#          reaction-type: hooray
