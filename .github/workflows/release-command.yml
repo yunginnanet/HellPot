@@ -37,6 +37,7 @@ jobs:
           goversion: "https://dl.google.com/go/go1.22.2.linux-amd64.tar.gz"
           project_path: "./cmd/HellPot"
           binary_name: "HellPot"
+          compress_assets: OFF
           # extra_files: LICENSE README.md
           build_flags: -trimpath
           pre_command: export CGO_ENABLED=0
