@@ -2,7 +2,7 @@ name: Build and Release
 
 on:
   release:
-    types: [created, published, released]
+    types: [published]
   workflow_dispatch:
 #    inputs:
 #      repository:
