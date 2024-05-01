@@ -1,16 +1,18 @@
 name: Build and Release
 
 on:
+  release:
+    types: [created]
   workflow_dispatch:
     inputs:
       repository:
-        description: 'The repository from which the slash command was dispatched'
+        description: "The repository from which the slash command was dispatched"
         required: true
       comment-id:
-        description: 'The comment-id of the slash command'
+        description: "The comment-id of the slash command"
         required: true
       tag:
-        description: 'The tag to be released'
+        description: "The tag to be released"
         required: true
 
 jobs:
@@ -26,26 +28,26 @@ jobs:
           - goarch: arm64
             goos: windows
     steps:
-    - uses: actions/checkout@v4
-    - uses: wangyoucao577/go-release-action@v1.50
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        goos: ${{ matrix.goos }}
-        goarch: ${{ matrix.goarch }}
-        goversion: "https://dl.google.com/go/go1.20.1.linux-amd64.tar.gz"
-        project_path: "./cmd/HellPot"
-        binary_name: "HellPot"
-        extra_files: LICENSE README.md
-        build_flags: -trimpath
-        pre_command: export CGO_ENABLED=0
-        ldflags: -s -w -X main.version=${{ github.event.inputs.tag }}
-        release_tag: ${{ github.event.inputs.tag }}
-        md5sum: FALSE
-        sha256sum: TRUE
-    - name: Add reaction
-      uses: peter-evans/create-or-update-comment@v4
-      with:
-        token: ${{ secrets.PAT }}
-        repository: ${{ github.event.inputs.repository }}
-        comment-id: ${{ github.event.inputs.comment-id }}
-        reaction-type: hooray
+      - uses: actions/checkout@v4
+      - uses: wangyoucao577/go-release-action@v1.50
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          goversion: "https://dl.google.com/go/go1.20.1.linux-amd64.tar.gz"
+          project_path: "./cmd/HellPot"
+          binary_name: "HellPot"
+          extra_files: LICENSE README.md
+          build_flags: -trimpath
+          pre_command: export CGO_ENABLED=0
+          ldflags: -s -w -X main.version=${{ github.event.inputs.tag }}
+          release_tag: ${{ github.event.inputs.tag }}
+          md5sum: FALSE
+          sha256sum: TRUE
+      - name: Add reaction
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.PAT }}
+          repository: ${{ github.event.inputs.repository }}
+          comment-id: ${{ github.event.inputs.comment-id }}
+          reaction-type: hooray
