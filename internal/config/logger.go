@@ -20,10 +20,7 @@ var (
 
 func prepLogDir() {
 	logDir = snek.GetString("logger.directory")
-	if !strings.HasSuffix(logDir, "/") {
-		logDir += "/"
-	}
-	if err := os.MkdirAll(logDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(logDir, 0750); err != nil {
 		println("cannot create log directory: " + logDir + "(" + err.Error() + ")")
 		os.Exit(1)
 	}
