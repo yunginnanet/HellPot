@@ -48,14 +48,16 @@ func (h *Heffalump) WriteHell(bw *bufio.Writer) (int64, error) {
 	}()
 
 	buf := h.pool.Get().([]byte)
-	defer h.pool.Put(buf)
 
 	if _, err = bw.WriteString("<html>\n<body>\n"); err != nil {
+		h.pool.Put(buf)
 		return n, err
 	}
 	if n, err = io.CopyBuffer(bw, h.mm, buf); err != nil {
+		h.pool.Put(buf)
 		return n, nil
 	}
 
+	h.pool.Put(buf)
 	return n, nil
 }
