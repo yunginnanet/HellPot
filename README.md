@@ -6,7 +6,7 @@
 
 HellPot is an endless honeypot based on [Heffalump](https://github.com/carlmjohnson/heffalump) that sends unruly HTTP bots to hell.
 
-Notably it implements a [toml configuration file](https://github.com/spf13/viper), has [JSON logging](https://github.com/rs/zerolog), and comes with significant performance gains.
+Notably it implements a [toml configuration file](https://github.com/knadh/koanf), has [JSON logging](https://github.com/rs/zerolog), and comes with significant performance gains.
 
 ![Exploding Heffalump](https://tcp.ac/i/H8O9M.gif)
 
@@ -60,6 +60,15 @@ In the event of a missing configuration file, HellPot will attempt to place it's
 
 ## Configuration Reference
 
+
+> [!TIP]
+> Configuration values can be overridden with environment variables prefixed with `HELLPOT_`.
+> When using this method, replace underscores in configuration keys with two underscores.
+>
+> e.g:
+> to set `http.bind_addr` via env, set `HELLPOT_HTTP_BIND__ADDR="x.x.x.x"`
+
+
 ```toml
 [deception]
   # Used as "Server" HTTP header. Note that reverse proxies may hide this.
@@ -108,7 +117,12 @@ In the event of a missing configuration file, HellPot will attempt to place it's
   restrict_concurrency = false
 ```
 
-## Example Web Server Config (nginx)
+### Example Reverse Proxy Configs
+
+#### nginx
+
+<details>
+  <summary>nginx</summary>
 
 ```nginx
 location '/robots.txt' {
@@ -124,7 +138,12 @@ location '/wp-login.php' {
 }
 ```
 
-## Example Web Server Config (apache)
+</details>
+
+#### Apache
+
+<details>
+  <summary>apache (mod_proxy + mod_proxy_http)</summary>
 
 All nonexisting URLs are being reverse proxied to a HellPot instance on localhost, which is set to catchall. Traffic served by HellPot is rate limited to 5 KiB/s.
 
@@ -160,6 +179,8 @@ All nonexisting URLs are being reverse proxied to a HellPot instance on localhos
 
 </VirtualHost>
 ```
+
+</details>
 
 ## Related Suffering
 

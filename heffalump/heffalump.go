@@ -61,7 +61,6 @@ func (h *Heffalump) WriteHell(bw *bufio.Writer, cType ContentType) (int64, error
 	}()
 
 	buf := h.pool.Get().([]byte)
-	defer h.pool.Put(buf)
 
 	switch cType {
 	case PlainText:
@@ -83,8 +82,10 @@ func (h *Heffalump) WriteHell(bw *bufio.Writer, cType ContentType) (int64, error
 		panic("unhandled default case")
 	}
 	if n, err = io.CopyBuffer(bw, h.mm, buf); err != nil {
+		h.pool.Put(buf)
 		return n, nil
 	}
 
+	h.pool.Put(buf)
 	return n, nil
 }
