@@ -19,7 +19,7 @@ var (
 )
 
 func prepLogDir() {
-	logDir = snek.GetString("logger.directory")
+	logDir = snek.String("logger.directory")
 	if err := os.MkdirAll(logDir, 0750); err != nil {
 		println("cannot create log directory: " + logDir + "(" + err.Error() + ")")
 		os.Exit(1)
@@ -31,7 +31,7 @@ func prepLogDir() {
 func StartLogger(pretty bool, targets ...io.Writer) zerolog.Logger {
 	logFileName := "HellPot"
 
-	if snek.GetBool("logger.use_date_filename") {
+	if snek.Bool("logger.use_date_filename") {
 		tn := strings.ReplaceAll(time.Now().Format(time.RFC822), " ", "_")
 		tn = strings.ReplaceAll(tn, ":", "-")
 		logFileName = logFileName + "_" + tn
