@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -24,6 +25,16 @@ var (
 	snek         = viper.New(".")
 )
 
+func init() {
+	home, _ = os.UserHomeDir()
+	if home == "" {
+		home = os.Getenv("HOME")
+	}
+	if home == "" {
+		println("WARNING: could not determine home directory")
+	}
+}
+
 // exported generic vars
 var (
 	// Trace is the value of our trace (extra verbose)  on/off toggle as per the current configuration.
@@ -37,8 +48,13 @@ var (
 func writeConfig() string {
 	prefConfigLocation, _ := os.UserConfigDir()
 
+	if prefConfigLocation == "" {
+		home, _ = os.UserHomeDir()
+		prefConfigLocation = filepath.Join(home, ".config", Title)
+	}
+
 	if _, err := os.Stat(prefConfigLocation); os.IsNotExist(err) {
-		if err = os.MkdirAll(prefConfigLocation, 0o750); err != nil {
+		if err = os.MkdirAll(prefConfigLocation, 0o750); err != nil && !errors.Is(err, os.ErrExist) {
 			println("error writing new config: " + err.Error())
 			os.Exit(1)
 		}
@@ -88,25 +104,31 @@ func Init() {
 	}
 
 	if chosen == "" && uconf != "" {
+		_ = os.MkdirAll(filepath.Join(uconf, Title), 0o645)
 		chosen = filepath.Join(uconf, Title, "config.toml")
 	}
 
 	if chosen == "" {
+		pwd, _ := os.Getwd()
 		if _, err := os.Stat("./config.toml"); err == nil {
 			chosen = "./config.toml"
+		} else {
+			if _, err := os.Stat(filepath.Join(pwd, "config.toml")); err == nil {
+				chosen = filepath.Join(pwd, "config.toml")
+			}
 		}
 	}
 
-	if chosen == "" {
+	loadErr := snek.Load(file.Provider(chosen), toml.Parser())
+
+	if chosen == "" || loadErr != nil {
 		println("No configuration file found, writing new configuration file...")
 		chosen = writeConfig()
 	}
-
 	Filename = chosen
 
-	if err := snek.Load(file.Provider(chosen), toml.Parser()); err != nil {
-		println("Error opening specified config file: " + chosen)
-		println(err.Error())
+	if loadErr = snek.Load(file.Provider(chosen), toml.Parser()); loadErr != nil {
+		fmt.Println("failed to load default config file: ", loadErr.Error())
 		os.Exit(1)
 	}
 
