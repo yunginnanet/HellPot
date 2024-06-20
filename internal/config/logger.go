@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -20,10 +21,10 @@ var (
 
 func prepLogDir() {
 	logDir = snek.String("logger.directory")
-	if err := os.MkdirAll(logDir, 0750); err != nil {
-		println("cannot create log directory: " + logDir + "(" + err.Error() + ")")
-		os.Exit(1)
+	if logDir == "" {
+		logDir = filepath.Join(home, ".local", "share", Title, "logs")
 	}
+	_ = os.MkdirAll(logDir, 0750)
 }
 
 // StartLogger instantiates an instance of our zerolog loggger so we can hook it in our main package.
