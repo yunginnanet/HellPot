@@ -24,7 +24,7 @@ func prepLogDir() {
 	if logDir == "" {
 		logDir = filepath.Join(home, ".local", "share", Title, "logs")
 	}
-	_ = os.MkdirAll(logDir, 0666)
+	_ = os.MkdirAll(logDir, 0750)
 }
 
 // StartLogger instantiates an instance of our zerolog loggger so we can hook it in our main package.
