@@ -1,46 +1,66 @@
 package config
 
 import (
-	"fmt"
-	"io"
-	"os"
-	"path"
+	"bytes"
 	"runtime"
+	"time"
 
-	"github.com/spf13/afero"
+	"github.com/knadh/koanf/parsers/toml"
 )
+
+var Defaults = &Preset{val: defOpts}
 
 func init() {
-	var err error
-	if home, err = os.UserHomeDir(); err != nil {
-		panic(err)
-	}
-	if len(defOpts) == 0 {
-		panic("default options map is empty")
-	}
-	defOpts["logger"]["directory"] = path.Join(home, ".local", "share", Title, "logs")
-	prefConfigLocation = path.Join(home, ".config", Title)
+	Defaults.IO = &PresetIO{p: Defaults}
 }
 
-var (
-	configSections = []string{"logger", "http", "performance", "deception", "ssh"}
-	defNoColor     = false
-)
+type Preset struct {
+	val map[string]interface{}
+	IO  *PresetIO
+}
 
-var defOpts = map[string]map[string]interface{}{
-	"logger": {
-		"debug":             true,
-		"trace":             false,
-		"nocolor":           defNoColor,
-		"use_date_filename": true,
-		"docker_logging":    false,
+type PresetIO struct {
+	p   *Preset
+	buf *bytes.Buffer
+}
+
+func (pre *Preset) ReadBytes() ([]byte, error) {
+	return toml.Parser().Marshal(pre.val) //nolint:wrapcheck
+}
+
+func (shim *PresetIO) Read(p []byte) (int, error) {
+	if shim.buf.Len() > 0 {
+		return shim.buf.Read(p) //nolint:wrapcheck
+	}
+	data, err := shim.p.ReadBytes()
+	if err != nil {
+		return 0, err
+	}
+	if shim.buf == nil {
+		shim.buf = bytes.NewBuffer(data)
+	}
+	return shim.buf.Read(p) //nolint:wrapcheck
+}
+
+func (pre *Preset) Read() (map[string]interface{}, error) {
+	return pre.val, nil
+}
+
+var defOpts = map[string]interface{}{
+	"logger": map[string]interface{}{
+		"debug":               true,
+		"trace":               false,
+		"nocolor":             runtime.GOOS == "windows",
+		"use_date_filename":   true,
+		"docker_logging":      false,
+		"console_time_format": time.Kitchen,
 	},
-	"http": {
+	"http": map[string]interface{}{
 		"use_unix_socket":         false,
 		"unix_socket_path":        "/var/run/hellpot",
 		"unix_socket_permissions": "0666",
 		"bind_addr":               "127.0.0.1",
-		"bind_port":               "8080",
+		"bind_port":               int64(8080), //nolint:gomnd
 		"real_ip_header":          "X-Real-IP",
 
 		"router": map[string]interface{}{
@@ -55,52 +75,11 @@ var defOpts = map[string]map[string]interface{}{
 			"Cloudflare-Traffic-Manager",
 		},
 	},
-	"performance": {
+	"performance": map[string]interface{}{
 		"restrict_concurrency": false,
-		"max_workers":          256,
+		"max_workers":          256, //nolint:gomnd
 	},
-	"deception": {
+	"deception": map[string]interface{}{
 		"server_name": "nginx",
 	},
-}
-
-func gen(memfs afero.Fs) {
-	target := fmt.Sprintf("%s.toml", Title)
-	if err := snek.SafeWriteConfigAs("config.toml"); err != nil {
-		print(err.Error())
-		os.Exit(1)
-	}
-	var f afero.File
-	var err error
-	f, err = memfs.Open("config.toml")
-	if err != nil {
-		println(err.Error())
-		os.Exit(1)
-	}
-	nf, err := os.Create(target) // #nosec G304
-	if err != nil {
-		println(err.Error())
-		os.Exit(1)
-	}
-	if _, err = io.Copy(nf, f); err != nil {
-		println(err.Error())
-		os.Exit(1)
-	}
-	println("default configuration successfully written to " + target)
-	os.Exit(0)
-}
-
-func setDefaults() {
-	memfs := afero.NewMemMapFs()
-	//goland:noinspection GoBoolExpressions
-	if runtime.GOOS == "windows" {
-		defNoColor = true
-	}
-	for _, def := range configSections {
-		snek.SetDefault(def, defOpts[def])
-	}
-	if GenConfig {
-		snek.SetFs(memfs)
-		gen(memfs)
-	}
 }

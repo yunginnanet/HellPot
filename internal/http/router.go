@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,10 +21,11 @@ import (
 var (
 	log              *zerolog.Logger
 	hellpotHeffalump *heffalump.Heffalump
+	runningConfig    *config.Parameters
 )
 
 func getRealRemote(ctx *fasthttp.RequestCtx) string {
-	xrealip := string(ctx.Request.Header.Peek(config.HeaderName))
+	xrealip := string(ctx.Request.Header.Peek(runningConfig.HTTP.ProxiedIPHeader))
 	if len(xrealip) > 0 {
 		return xrealip
 	}
@@ -43,15 +45,13 @@ func hellPot(ctx *fasthttp.RequestCtx) {
 		Str("REMOTE_ADDR", remoteAddr).
 		Interface("URL", string(ctx.RequestURI())).Logger()
 
-	for _, denied := range config.UseragentBlacklistMatchers {
-		if strings.Contains(string(ctx.UserAgent()), denied) {
-			slog.Trace().Msg("Ignoring useragent")
-			ctx.Error("Not found", http.StatusNotFound)
-			return
-		}
+	if runningConfig.HTTP.ClientRules.MatchUseragent(ctx.UserAgent()) {
+		slog.Trace().Msg("Ignoring useragent")
+		ctx.Error("Not found", http.StatusNotFound)
+		return
 	}
 
-	if config.Trace {
+	if runningConfig.Logger.Trace {
 		slog = slog.With().Str("caller", path).Logger()
 	}
 
@@ -81,31 +81,29 @@ func hellPot(ctx *fasthttp.RequestCtx) {
 }
 
 func getSrv(r *router.Router) fasthttp.Server {
-	if !config.RestrictConcurrency {
-		config.MaxWorkers = fasthttp.DefaultConcurrency
+	if !runningConfig.Perf.ConcurrencyCap {
+		runningConfig.Perf.MaxWorkers = fasthttp.DefaultConcurrency
 	}
 
-	log = config.GetLogger()
+	log = runningConfig.GetLogger()
 
 	return fasthttp.Server{
 		// User defined server name
 		// Likely not useful if behind a reverse proxy without additional configuration of the proxy server.
-		Name: config.FakeServerName,
+		Name: runningConfig.Liar.FakeServerName,
 
 		/*
 			from fasthttp docs: "By default request read timeout is unlimited."
-			My thinking here is avoiding some sort of weird oversized GET query just in case.
+										Nope.
 		*/
 		ReadTimeout:        5 * time.Second,
 		MaxRequestBodySize: 1 * 1024 * 1024,
 
-		// Help curb abuse of HellPot (we've always needed this badly)
-		MaxConnsPerIP:      10,
+		MaxConnsPerIP:      3,
 		MaxRequestsPerConn: 2,
-		Concurrency:        config.MaxWorkers,
+		Concurrency:        runningConfig.Perf.MaxWorkers,
 
-		// only accept GET requests
-		GetOnly: true,
+		// GetOnly: true,
 
 		// we don't care if a request ends up being handled by a different handler (in fact it probably will)
 		KeepHijackedConns: true,
@@ -121,18 +119,19 @@ func getSrv(r *router.Router) fasthttp.Server {
 }
 
 // Serve starts our HTTP server and request router
-func Serve() error {
+func Serve(config *config.Parameters) error {
 	log = config.GetLogger()
+	runningConfig = config
 
-	switch config.UseCustomHeffalump {
+	switch config.Bespoke.CustomHeffalump {
 	case true:
-		content, err := os.ReadFile(config.Grimoire)
+		content, err := os.ReadFile(config.Bespoke.Grimoire)
 		if err != nil {
 			panic(err)
 		}
 		// Wasteful, but only done once at startup
 		src := string(content)
-		log.Info().Msgf("Using custom grimoire file '%s'", config.Grimoire)
+		log.Info().Msgf("Using custom grimoire file '%s'", config.Bespoke.Grimoire)
 
 		if len(src) < 1 {
 			panic("grimoire file was empty!")
@@ -145,16 +144,16 @@ func Serve() error {
 		hellpotHeffalump = heffalump.NewDefaultHeffalump()
 	}
 
-	l := config.HTTPBind + ":" + config.HTTPPort
+	l := config.HTTP.Bind + ":" + strconv.Itoa(int(config.HTTP.Port))
 
 	r := router.New()
 
-	if config.MakeRobots && !config.CatchAll {
+	if config.HTTP.Router.MakeRobots && !config.HTTP.Router.CatchAll {
 		r.GET("/robots.txt", robotsTXT)
 	}
 
-	if !config.CatchAll {
-		for _, p := range config.Paths {
+	if !config.HTTP.Router.CatchAll {
+		for _, p := range config.HTTP.Router.Paths {
 			log.Trace().Str("caller", "router").Msgf("Add route: %s", p)
 			r.GET(fmt.Sprintf("/%s", p), hellPot)
 		}
@@ -166,15 +165,15 @@ func Serve() error {
 	srv := getSrv(r)
 
 	//goland:noinspection GoBoolExpressions
-	if !config.UseUnixSocket || runtime.GOOS == "windows" {
+	if !config.HTTP.UnixSocket.UseUnixSocket || runtime.GOOS == "windows" {
 		log.Info().Str("caller", l).Msg("Listening and serving HTTP...")
 		return srv.ListenAndServe(l)
 	}
 
-	if len(config.UnixSocketPath) < 1 {
+	if len(config.HTTP.UnixSocket.UnixSocketPath) < 1 {
 		log.Fatal().Msg("unix_socket_path configuration directive appears to be empty")
 	}
 
-	log.Info().Str("caller", config.UnixSocketPath).Msg("Listening and serving HTTP...")
-	return listenOnUnixSocket(config.UnixSocketPath, r)
+	log.Info().Str("caller", config.HTTP.UnixSocket.UnixSocketPath).Msg("Listening and serving HTTP...")
+	return listenOnUnixSocket(config.HTTP.UnixSocket.UnixSocketPath, r)
 }

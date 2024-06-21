@@ -9,11 +9,10 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
-
-	"github.com/yunginnanet/HellPot/internal/config"
 )
 
 func listenOnUnixSocket(addr string, r *router.Router) error {
+	config := runningConfig.HTTP.UnixSocket
 	var err error
 	var unixAddr *net.UnixAddr
 	var unixListener *net.UnixListener
