@@ -1,3 +1,0 @@
-package hellscope
-
-func Measured
