@@ -92,7 +92,6 @@ func main() {
 	if runningConfig == nil {
 		if runningConfig, err = config.Setup(nil); err != nil || runningConfig == nil {
 			panic("failed to setup default config...\n" + err.Error())
-			return // unreachable, but the linter doesn't seem to realize that
 		}
 	}
 
