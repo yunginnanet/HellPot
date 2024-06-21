@@ -1,35 +1,66 @@
 package config
 
 import (
-	"io"
-	"os"
+	"bytes"
 	"runtime"
 	"time"
 
 	"github.com/knadh/koanf/parsers/toml"
-	"github.com/spf13/afero"
 )
 
-var (
-	configSections = []string{"logger", "http", "performance", "deception", "ssh"}
-	defNoColor     = false
-)
+var Defaults = &Preset{val: defOpts}
 
-var defOpts = map[string]map[string]interface{}{
-	"logger": {
+func init() {
+	Defaults.IO = &PresetIO{p: Defaults}
+}
+
+type Preset struct {
+	val map[string]interface{}
+	IO  *PresetIO
+}
+
+type PresetIO struct {
+	p   *Preset
+	buf *bytes.Buffer
+}
+
+func (pre *Preset) ReadBytes() ([]byte, error) {
+	return toml.Parser().Marshal(pre.val) //nolint:wrapcheck
+}
+
+func (shim *PresetIO) Read(p []byte) (int, error) {
+	if shim.buf.Len() > 0 {
+		return shim.buf.Read(p) //nolint:wrapcheck
+	}
+	data, err := shim.p.ReadBytes()
+	if err != nil {
+		return 0, err
+	}
+	if shim.buf == nil {
+		shim.buf = bytes.NewBuffer(data)
+	}
+	return shim.buf.Read(p) //nolint:wrapcheck
+}
+
+func (pre *Preset) Read() (map[string]interface{}, error) {
+	return pre.val, nil
+}
+
+var defOpts = map[string]interface{}{
+	"logger": map[string]interface{}{
 		"debug":               true,
 		"trace":               false,
-		"nocolor":             defNoColor,
+		"nocolor":             runtime.GOOS == "windows",
 		"use_date_filename":   true,
 		"docker_logging":      false,
 		"console_time_format": time.Kitchen,
 	},
-	"http": {
+	"http": map[string]interface{}{
 		"use_unix_socket":         false,
 		"unix_socket_path":        "/var/run/hellpot",
 		"unix_socket_permissions": "0666",
 		"bind_addr":               "127.0.0.1",
-		"bind_port":               "8080",
+		"bind_port":               int64(8080), //nolint:gomnd
 		"real_ip_header":          "X-Real-IP",
 
 		"router": map[string]interface{}{
@@ -44,67 +75,11 @@ var defOpts = map[string]map[string]interface{}{
 			"Cloudflare-Traffic-Manager",
 		},
 	},
-	"performance": {
+	"performance": map[string]interface{}{
 		"restrict_concurrency": false,
-		"max_workers":          256,
+		"max_workers":          256, //nolint:gomnd
 	},
-	"deception": {
+	"deception": map[string]interface{}{
 		"server_name": "nginx",
 	},
-}
-
-func gen(memfs afero.Fs) {
-	var (
-		dat []byte
-		err error
-		f   afero.File
-	)
-	if dat, err = snek.Marshal(toml.Parser()); err != nil {
-		println(err.Error())
-		os.Exit(1)
-	}
-	if f, err = memfs.Create("config.toml"); err != nil {
-		println(err.Error())
-		os.Exit(1)
-	}
-	var n int
-	if n, err = f.Write(dat); err != nil || n != len(dat) {
-		if err == nil {
-			err = io.ErrShortWrite
-		}
-		println(err.Error())
-		os.Exit(1)
-	}
-	println("Default config written to config.toml")
-	os.Exit(0)
-}
-
-func setDefaults() {
-	memfs := afero.NewMemMapFs()
-	//goland:noinspection GoBoolExpressions
-	if runtime.GOOS == "windows" {
-		defNoColor = true
-	}
-	for _, def := range configSections {
-		for key, val := range defOpts[def] {
-			if _, ok := val.(map[string]interface{}); !ok {
-				if err := snek.Set(def+"."+key, val); err != nil {
-					println(err.Error())
-					os.Exit(1)
-				}
-				continue
-			}
-			for k, v := range val.(map[string]interface{}) {
-				if err := snek.Set(def+"."+key+"."+k, v); err != nil {
-					println(err.Error())
-					os.Exit(1)
-				}
-			}
-			continue
-		}
-	}
-
-	if GenConfig {
-		gen(memfs)
-	}
 }
