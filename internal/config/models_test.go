@@ -29,19 +29,19 @@ func TestCompileRules(t *testing.T) {
 	if len(rules.UseragentDisallowStrings) != 3 {
 		t.Error("expected 3 got", len(rules.UseragentDisallowStrings))
 	}
-	if !rules.MatchUseragent("yeeterson") {
+	if !rules.MatchUseragent([]byte("yeeterson")) {
 		t.Error("expected true got false")
 	}
-	if !rules.MatchUseragent("mc") {
+	if !rules.MatchUseragent([]byte("mc")) {
 		t.Error("expected true got false")
 	}
-	if !rules.MatchUseragent("yooterson") {
+	if !rules.MatchUseragent([]byte("yooterson")) {
 		t.Error("expected true got false")
 	}
-	if !rules.MatchUseragent("gooters%n") {
+	if !rules.MatchUseragent([]byte("gooters%n")) {
 		t.Error("expected true got false")
 	}
-	if rules.MatchUseragent("yootersongooterson") {
+	if rules.MatchUseragent([]byte("yootersongooterson")) {
 		t.Error("expected false got true")
 	}
 }
