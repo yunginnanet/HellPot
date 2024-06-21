@@ -4,6 +4,7 @@ import (
 	"flag"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/yunginnanet/HellPot/internal/extra"
 	"github.com/yunginnanet/HellPot/internal/version"
@@ -12,6 +13,13 @@ import (
 var CLIFlags = flag.NewFlagSet("cli", flag.ExitOnError)
 
 func init() {
+	for _, arg := range os.Args {
+		if strings.Contains(arg, "test.testlogfile") {
+			// we're in a unit test, bail
+			return
+		}
+	}
+
 	CLIFlags.Bool("logger-debug", false, "force debug logging")
 	CLIFlags.Bool("logger-trace", false, "force trace logging")
 	CLIFlags.Bool("logger-nocolor", false, "force no color logging")
