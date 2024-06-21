@@ -50,12 +50,6 @@ func (h *Heffalump) WriteHell(bw *bufio.Writer, cType ContentType) (int64, error
 	var n int64
 	var err error
 
-	/*	defer func() {
-		if r := recover(); r != nil {
-			log.Error().Interface("caller", r).Msg("panic recovered!")
-		}
-	}()*/
-
 	buf := h.pool.Get().([]byte)
 
 	switch cType {
