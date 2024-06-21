@@ -29,7 +29,7 @@ func (pre *Preset) ReadBytes() ([]byte, error) {
 }
 
 func (shim *PresetIO) Read(p []byte) (int, error) {
-	if shim.buf.Len() > 0 {
+	if shim.buf != nil && shim.buf.Len() > 0 {
 		return shim.buf.Read(p) //nolint:wrapcheck
 	}
 	data, err := shim.p.ReadBytes()
