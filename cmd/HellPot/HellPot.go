@@ -23,7 +23,8 @@ var (
 func writeConfig(target string) bool {
 	var f *os.File
 	var err error
-	if f, err = os.Create(target); err != nil {
+	f, err = os.Create(target) // #nosec G304 -- go home gosec, you're drunk
+	if err != nil {
 		println("failed to create config file: " + err.Error())
 		return false
 	}
@@ -70,7 +71,7 @@ func main() {
 	var err error
 	var f *os.File
 
-	f, err = os.Open(resolvedConf)
+	f, err = os.Open(resolvedConf) // #nosec G304 go home gosec, you're drunk
 	if err == nil {
 		runningConfig, setupErr = config.Setup(f)
 	}
