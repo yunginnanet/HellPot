@@ -51,6 +51,9 @@ var (
 
 func writeConfig() string {
 	prefConfigLocation, _ := os.UserConfigDir()
+	if prefConfigLocation != "" {
+		prefConfigLocation = filepath.Join(prefConfigLocation, Title)
+	}
 
 	if prefConfigLocation == "" {
 		home, _ = os.UserHomeDir()
@@ -63,6 +66,7 @@ func writeConfig() string {
 			os.Exit(1)
 		}
 	}
+
 	Filename = filepath.Join(prefConfigLocation, "config.toml")
 
 	tomld, terr := toml.Parser().Marshal(snek.All())
