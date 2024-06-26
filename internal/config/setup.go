@@ -3,9 +3,11 @@ package config
 import (
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/knadh/koanf/parsers/toml"
+	flags "github.com/knadh/koanf/providers/basicflag"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/v2"
 )
@@ -26,6 +28,134 @@ func (r *readerProvider) Read() (map[string]interface{}, error) {
 	return toml.Parser().Unmarshal(b) //nolint:wrapcheck
 }
 
+func normalizeMap(m map[string]interface{}) map[string]interface{} {
+	for k, v := range m {
+		ogk := k
+		k = strings.ToLower(k)
+
+		var sslice []string
+		var sliceOK bool
+
+		if sslice, sliceOK = v.([]string); !sliceOK {
+			goto justLower
+		}
+		for i, s := range sslice {
+			sslice[i] = strings.ToLower(s)
+		}
+		slices.Sort(sslice)
+		m[k] = sslice
+	justLower:
+		if k != ogk {
+			delete(m, ogk)
+		}
+	}
+	return m
+}
+
+func (p *Parameters) merge(ogk *koanf.Koanf, newk *koanf.Koanf, friendlyName string) error {
+	if ogk == nil {
+		panic("original koanf is nil")
+	}
+	if newk == nil {
+		return nil
+	}
+	dirty := false
+
+	newKeys := normalizeMap(newk.All())
+
+	if len(newk.All()) == 0 || len(newKeys) == 0 {
+		return nil
+	}
+
+	for k, v := range newKeys {
+		if !ogk.Exists(k) {
+			if err := ogk.Set(k, v); err != nil {
+				panic(fmt.Sprintf("failed to set key %s: %v", k, err))
+			}
+			dirty = true
+			continue
+		}
+
+		ogv := ogk.Get(k)
+		if ogv == nil {
+			if err := ogk.Set(k, v); err != nil {
+				panic(fmt.Sprintf("failed to set key %s: %v", k, err))
+			}
+			dirty = true
+			continue
+		}
+
+		if _, hasDefault := Defaults.val[k]; !hasDefault {
+			continue
+		}
+
+		if ogv == Defaults.val[k] && v != ogv {
+			if err := ogk.Set(k, v); err != nil {
+				panic(fmt.Sprintf("failed to set key %s: %v", k, err))
+			}
+			dirty = true
+		}
+	}
+
+	if !dirty {
+		return nil
+	}
+
+	println("found configuration overrides in " + friendlyName)
+
+	if err := ogk.Merge(newk); err != nil {
+		return fmt.Errorf("failed to merge env config: %w", err)
+	}
+
+	return nil
+}
+
+func (p *Parameters) LoadEnv(k *koanf.Koanf) error {
+	envK := koanf.New(".")
+
+	envErr := envK.Load(env.Provider("HELLPOT_", ".", func(s string) string {
+		s = strings.TrimPrefix(s, "HELLPOT_")
+		s = strings.ToLower(s)
+		s = strings.ReplaceAll(s, "__", " ")
+		s = strings.ReplaceAll(s, "_", ".")
+		s = strings.ReplaceAll(s, " ", "_")
+		return s
+	}), nil)
+
+	if envErr != nil {
+		return fmt.Errorf("failed to load env: %w", envErr)
+	}
+
+	if err := p.merge(k, envK, "environment variables"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func parseCLISlice(key string, value string) (string, interface{}) {
+	if _, ok := slicePtrs[key]; !ok {
+		return key, value
+	}
+	split := strings.Split(value, ",")
+	slices.Sort(split)
+	return key, split
+}
+
+func (p *Parameters) LoadFlags(k *koanf.Koanf) error {
+	flagsK := koanf.New(".")
+
+	if err := flagsK.Load(flags.ProviderWithValue(CLIFlags, ".", parseCLISlice), nil); err != nil {
+		return fmt.Errorf("failed to load flags: %w", err)
+	}
+
+	if err := p.merge(k, flagsK, "cli arguments"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func Setup(source io.Reader) (*Parameters, error) {
 	k := koanf.New(".")
 
@@ -39,29 +169,20 @@ func Setup(source io.Reader) (*Parameters, error) {
 		}
 	}
 
-	envK := koanf.New(".")
-
-	envErr := envK.Load(env.Provider("HELLPOT_", ".", func(s string) string {
-		s = strings.TrimPrefix(s, "HELLPOT_")
-		s = strings.ToLower(s)
-		s = strings.ReplaceAll(s, "__", " ")
-		s = strings.ReplaceAll(s, "_", ".")
-		s = strings.ReplaceAll(s, " ", "_")
-		return s
-	}), nil)
-
-	if envErr == nil && envK != nil && len(envK.All()) > 0 {
-		if err := k.Merge(envK); err != nil {
-			return nil, fmt.Errorf("failed to merge env config: %w", err)
-		}
-	}
-
 	p := &Parameters{
 		source: k,
 	}
 
 	if source == nil {
 		p.UsingDefaults = true
+	}
+
+	if err := p.LoadFlags(k); err != nil {
+		return nil, err
+	}
+
+	if err := p.LoadEnv(k); err != nil {
+		return nil, err
 	}
 
 	if err := k.Unmarshal("", p); err != nil {

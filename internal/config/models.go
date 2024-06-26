@@ -85,6 +85,6 @@ type DevilsPlaythings struct {
 
 // Customization represents the configuration for the customizations.
 type Customization struct {
-	CustomHeffalump bool   `koanf:"custom_heffalump"`
-	Grimoire        string `koanf:"grimoire"`
+	CustomHeffalump bool   `koanf:"enable_grimoire"`
+	Grimoire        string `koanf:"grimoire_file"`
 }

@@ -119,7 +119,7 @@ func getSrv(r *router.Router) fasthttp.Server {
 	}
 }
 
-func setupHeffalump(config *config.Parameters) error {
+func SetupHeffalump(config *config.Parameters) error {
 	switch config.Bespoke.CustomHeffalump {
 	case true:
 		content, err := os.ReadFile(config.Bespoke.Grimoire)
@@ -150,6 +150,10 @@ func setupHeffalump(config *config.Parameters) error {
 func Serve(config *config.Parameters) error {
 	log = config.GetLogger()
 	runningConfig = config
+
+	if err := SetupHeffalump(config); err != nil {
+		return fmt.Errorf("failed to setup heffalump: %w", err)
+	}
 
 	l := config.HTTP.Bind + ":" + strconv.Itoa(int(config.HTTP.Port))
 

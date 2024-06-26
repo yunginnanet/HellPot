@@ -83,4 +83,8 @@ var defOpts = map[string]interface{}{
 	"deception": map[string]interface{}{
 		"server_name": "nginx",
 	},
+	"bespoke": map[string]interface{}{
+		"grimoire_file":   "",
+		"enable_grimoire": false,
+	},
 }
