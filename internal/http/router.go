@@ -3,6 +3,7 @@ package http
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"runtime"
@@ -112,13 +113,13 @@ func getSrv(r *router.Router) fasthttp.Server {
 										Nope.
 		*/
 		ReadTimeout:        5 * time.Second,
-		MaxRequestBodySize: 1 * 1024 * 1024,
+		MaxRequestBodySize: 0.5 * 1024 * 1024,
 
 		MaxConnsPerIP:      3,
 		MaxRequestsPerConn: 2,
 		Concurrency:        runningConfig.Perf.MaxWorkers,
 
-		// GetOnly: true,
+		GetOnly: !runningConfig.IdleHands.POSTMimicry,
 
 		// we don't care if a request ends up being handled by a different handler (in fact it probably will)
 		KeepHijackedConns: true,
@@ -133,23 +134,19 @@ func getSrv(r *router.Router) fasthttp.Server {
 	}
 }
 
-// Serve starts our HTTP server and request router
-func Serve(config *config.Parameters) error {
-	log = config.GetLogger()
-	runningConfig = config
-
+func setupHeffalump(config *config.Parameters) error {
 	switch config.Bespoke.CustomHeffalump {
 	case true:
 		content, err := os.ReadFile(config.Bespoke.Grimoire)
 		if err != nil {
-			panic(err)
+			return fmt.Errorf("failed to read grimoire file '%s': %w", config.Bespoke.Grimoire, err)
 		}
 		// Wasteful, but only done once at startup
 		src := string(content)
 		log.Info().Msgf("Using custom grimoire file '%s'", config.Bespoke.Grimoire)
 
 		if len(src) < 1 {
-			panic("grimoire file was empty!")
+			return fmt.Errorf("%w: grimoire file '%s' appears to be empty", io.EOF, config.Bespoke.Grimoire)
 		}
 
 		markovMap := heffalump.MakeMarkovMap(strings.NewReader(src))
@@ -158,6 +155,16 @@ func Serve(config *config.Parameters) error {
 		log.Info().Msg("Using default source text")
 		hellpotHeffalump = heffalump.NewDefaultHeffalump()
 	}
+	if hellpotHeffalump == nil {
+		panic("failed to initialize heffalump")
+	}
+	return nil
+}
+
+// Serve starts our HTTP server and request router
+func Serve(config *config.Parameters) error {
+	log = config.GetLogger()
+	runningConfig = config
 
 	l := config.HTTP.Bind + ":" + strconv.Itoa(int(config.HTTP.Port))
 
@@ -182,7 +189,10 @@ func Serve(config *config.Parameters) error {
 	//goland:noinspection GoBoolExpressions
 	if !config.HTTP.UnixSocket.UseUnixSocket || runtime.GOOS == "windows" {
 		log.Info().Str("caller", l).Msg("Listening and serving HTTP...")
-		return srv.ListenAndServe(l)
+		err := srv.ListenAndServe(l)
+		if err != nil {
+			return fmt.Errorf("failed to start HTTP server: %w", err)
+		}
 	}
 
 	if len(config.HTTP.UnixSocket.UnixSocketPath) < 1 {
@@ -190,5 +200,14 @@ func Serve(config *config.Parameters) error {
 	}
 
 	log.Info().Str("caller", config.HTTP.UnixSocket.UnixSocketPath).Msg("Listening and serving HTTP...")
-	return listenOnUnixSocket(config.HTTP.UnixSocket.UnixSocketPath, r)
+	listener, err := listenOnUnixSocket(config.HTTP.UnixSocket.UnixSocketPath, r)
+	if err != nil {
+		return fmt.Errorf("failed to start unix listener: %w", err)
+	}
+
+	err = srv.Serve(listener)
+	if err != nil {
+		err = fmt.Errorf("failed to serve HTTP: %w", err)
+	}
+	return err
 }

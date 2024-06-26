@@ -17,8 +17,11 @@ type Parameters struct {
 	Perf    Performance           `koanf:"performance"`
 	Liar    Deception             `koanf:"deception"`
 
-	source *koanf.Koanf `koanf:"-"`
-	logger *zerolog.Logger
+	IdleHands DevilsPlaythings `koanf:"experimental"`
+
+	source        *koanf.Koanf    `koanf:"-"`
+	logger        *zerolog.Logger `koanf:"-"`
+	UsingDefaults bool            `koanf:"-"`
 }
 
 var once = &sync.Once{}
@@ -63,7 +66,7 @@ type Router struct {
 // HTTP represents the configuration for the HTTP server.
 type HTTP struct {
 	Bind string `koanf:"bind_addr"`
-	Port int64  `koanf:"port"`
+	Port int64  `koanf:"bind_port"`
 	// ProxiedIPHeader is the HTTP Header containing the original IP of the client
 	// for usage by traditional reverse Proxy deployments.
 	ProxiedIPHeader string           `koanf:"proxied_ip_header"`
