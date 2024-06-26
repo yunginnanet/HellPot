@@ -14,8 +14,12 @@ var CLIFlags = flag.NewFlagSet("cli", flag.ExitOnError)
 
 func init() {
 	for _, arg := range os.Args {
+		// check for unit test flags
 		if strings.Contains(arg, "test.testlogfile") {
 			// we're in a unit test, bail
+			return
+		}
+		if strings.Contains(arg, "test.v") {
 			return
 		}
 	}

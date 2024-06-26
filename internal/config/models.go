@@ -19,9 +19,9 @@ type Parameters struct {
 
 	IdleHands DevilsPlaythings `koanf:"experimental"`
 
-	source        *koanf.Koanf    `koanf:"-"`
-	logger        *zerolog.Logger `koanf:"-"`
-	UsingDefaults bool            `koanf:"-"`
+	source        *koanf.Koanf
+	logger        *zerolog.Logger
+	UsingDefaults bool
 }
 
 var once = &sync.Once{}
