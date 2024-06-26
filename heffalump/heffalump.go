@@ -32,8 +32,7 @@ func NewHeffalump(mm MarkovMap, buffsize int) *Heffalump {
 	}
 }
 
-// NewDefaultHeffalump instantiates a new default Heffalump from a MarkovMap created using
-// using the default source text.
+// NewDefaultHeffalump instantiates a new default Heffalump from a MarkovMap created using the default source text.
 func NewDefaultHeffalump() *Heffalump {
 	return NewHeffalump(NewDefaultMarkovMap(), DefaultBuffSize)
 }
