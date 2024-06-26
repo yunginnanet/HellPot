@@ -137,7 +137,7 @@ func (c *Configuration) setupDirAndFile() error {
 			fmt.Sprintf("%s-%s%s", og, time.Now().Format("2006-01-02-15-04-05"), ext),
 		)
 	}
-	if f, err = os.OpenFile(filepath.Join(c.Directory, c.File), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644); err != nil {
+	if f, err = os.OpenFile(filepath.Join(c.Directory, c.File), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err != nil {
 		return fmt.Errorf("failed to open log file: %w", err)
 	}
 	c.Outputs = append(c.Outputs, f)
