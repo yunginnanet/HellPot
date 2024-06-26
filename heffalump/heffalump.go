@@ -32,21 +32,14 @@ func NewHeffalump(mm MarkovMap, buffsize int) *Heffalump {
 	}
 }
 
-// NewDefaultHeffalump instantiates a new default Heffalump from a MarkovMap created using using the default source text.
+// NewDefaultHeffalump instantiates a new default Heffalump from a MarkovMap created using
+// using the default source text.
 func NewDefaultHeffalump() *Heffalump {
 	return NewHeffalump(NewDefaultMarkovMap(), DefaultBuffSize)
 }
 
-type ContentType int
-
-const (
-	PlainText ContentType = iota
-	HTML
-	JSON
-)
-
 // WriteHell writes markov chain heffalump hell to the provided io.Writer
-func (h *Heffalump) WriteHell(bw *bufio.Writer, cType ContentType) (int64, error) {
+func (h *Heffalump) WriteHell(bw *bufio.Writer) (int64, error) {
 	var n int64
 	var err error
 
@@ -55,24 +48,8 @@ func (h *Heffalump) WriteHell(bw *bufio.Writer, cType ContentType) (int64, error
 		panic("buffer pool type assertion failed, retrieved type is a " + fmt.Sprintf("%T", buf))
 	}
 
-	switch cType {
-	case PlainText:
-		if _, err = bw.WriteString("# Chapter 1\n"); err != nil {
-			return n, err
-		}
-		break
-	case HTML:
-		if _, err = bw.WriteString("<html>\n<body>\n"); err != nil {
-			return n, err
-		}
-		break
-	case JSON:
-		if _, err = bw.WriteString("[\""); err != nil {
-			return n, err
-		}
-		break
-	default:
-		panic("unhandled default case")
+	if _, err = bw.WriteString("<html>\n<body>\n"); err != nil {
+		return n, err
 	}
 	if n, err = io.CopyBuffer(bw, h.mm, buf); err != nil {
 		h.pool.Put(buf)

@@ -33,20 +33,6 @@ func getRealRemote(ctx *fasthttp.RequestCtx) string {
 	return ctx.RemoteIP().String()
 }
 
-func detectContentType(ctx *fasthttp.RequestCtx) (cType heffalump.ContentType) {
-	cType = heffalump.PlainText
-
-	acceptHeader := string(ctx.Request.Header.Peek("Accept"))
-
-	if strings.Contains(acceptHeader, "text/html") {
-		cType = heffalump.HTML
-	} else if strings.Contains(acceptHeader, "application/json") {
-		cType = heffalump.JSON
-	}
-
-	return
-}
-
 func hellPot(ctx *fasthttp.RequestCtx) {
 	path, pok := ctx.UserValue("path").(string)
 	if len(path) < 1 || !pok {
@@ -72,7 +58,6 @@ func hellPot(ctx *fasthttp.RequestCtx) {
 
 	slog.Info().Msg("NEW")
 
-	var cType = detectContentType(ctx)
 	s := time.Now()
 	var n int64
 
@@ -81,7 +66,7 @@ func hellPot(ctx *fasthttp.RequestCtx) {
 		var wn int64
 
 		for {
-			wn, err = hellpotHeffalump.WriteHell(bw, cType)
+			wn, err = hellpotHeffalump.WriteHell(bw)
 			n += wn
 			if err != nil {
 				slog.Trace().Err(err).Msg("END_ON_ERR")
