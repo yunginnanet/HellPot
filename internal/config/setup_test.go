@@ -14,7 +14,7 @@ func TestSetup(t *testing.T) {
 func SetupSuccess(t *testing.T) {
 	source := bytes.NewBufferString(`
 [http]
-port = 55
+bind_port = 55
 bind_addr = "5.5.5.5"
 
 [http.router]
@@ -31,7 +31,7 @@ makerobots = false
 		t.Fatal("Expected params to be not nil")
 	}
 
-	if params.source.Get("http.port") != int64(55) {
+	if params.source.Get("http.bind_port") != int64(55) {
 		t.Errorf("Expected 55, got (%T) %v", params.source.Get("http.port"), params.source.Get("http.port"))
 	}
 	if params.HTTP.Port != int64(55) {
@@ -77,7 +77,7 @@ func SetupNoFailureOnNilSource(t *testing.T) {
 		}
 
 		// nolint:forcetypeassert
-		if params.HTTP.Port != Defaults.val["http"].(map[string]interface{})["port"].(int64) {
+		if params.HTTP.Port != Defaults.val["http"].(map[string]interface{})["bind_port"].(int64) {
 			t.Errorf("Expected %v, got %v",
 				// nolint:forcetypeassert
 				Defaults.val["http"].(map[string]interface{})["port"].(int64), params.HTTP.Port,
