@@ -60,6 +60,10 @@ func Setup(source io.Reader) (*Parameters, error) {
 		source: k,
 	}
 
+	if source == nil {
+		p.UsingDefaults = true
+	}
+
 	if err := k.Unmarshal("", p); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
