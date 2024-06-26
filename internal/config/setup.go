@@ -15,7 +15,7 @@ type readerProvider struct {
 }
 
 func (r *readerProvider) ReadBytes() ([]byte, error) {
-	return io.ReadAll(r.source)
+	return io.ReadAll(r.source) //nolint:wrapcheck
 }
 
 func (r *readerProvider) Read() (map[string]interface{}, error) {

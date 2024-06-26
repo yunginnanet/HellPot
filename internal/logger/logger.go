@@ -19,6 +19,7 @@ type Configuration struct {
 	Debug         bool `koanf:"debug"`
 	Trace         bool `koanf:"trace"`
 	NoColor       bool `koanf:"nocolor"`
+	NoConsole     bool `koanf:"noconsole"`
 	DockerLogging bool `koanf:"docker_logging"`
 	// ConsoleTimeFormat sets the time format for the console.
 	// The string is passed to time.Format() down the line.
@@ -92,7 +93,6 @@ func (c *Configuration) Validate() error {
 func (c *Configuration) setupDirAndFile() error {
 	switch {
 	case c.Directory != "":
-		println(c.Directory)
 		stat, err := os.Stat(c.Directory)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("failed to access specified log directory: %w", err)
@@ -109,7 +109,6 @@ func (c *Configuration) setupDirAndFile() error {
 			c.File = "HellPot.log"
 		}
 	case c.Directory == "" && c.File != "":
-		println(c.File)
 		stat, err := os.Stat(filepath.Dir(c.File))
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("failed to access specified log directory: %w", err)
@@ -181,6 +180,21 @@ func (c *Configuration) SetupOutputs() error {
 		if err := c.setupSyslog(); err != nil {
 			return fmt.Errorf("failed to setup syslog: %w", err)
 		}
+	}
+
+	consoleSeen := false
+
+	for _, out := range c.Outputs {
+		if out == nil {
+			return fmt.Errorf("nil output provided")
+		}
+		if out == os.Stdout || out == os.Stderr {
+			consoleSeen = true
+		}
+	}
+
+	if !consoleSeen && !c.NoConsole {
+		c.Outputs = append(c.Outputs, os.Stdout)
 	}
 
 	return nil

@@ -51,6 +51,7 @@ var defOpts = map[string]interface{}{
 		"debug":               true,
 		"trace":               false,
 		"nocolor":             runtime.GOOS == "windows",
+		"noconsole":           false,
 		"use_date_filename":   false,
 		"docker_logging":      false,
 		"console_time_format": time.Kitchen,
