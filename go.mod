@@ -5,7 +5,6 @@ go 1.19
 require (
 	git.tcp.direct/kayos/common v0.9.7
 	github.com/fasthttp/router v1.5.1
-	github.com/google/go-cmdtest v0.4.0
 	github.com/knadh/koanf/parsers/toml v0.1.0
 	github.com/knadh/koanf/providers/env v0.1.0
 	github.com/knadh/koanf/v2 v2.1.1
@@ -16,8 +15,6 @@ require (
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1 // indirect
-	github.com/google/go-cmp v0.3.1 // indirect
-	github.com/google/renameio v0.1.0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
