@@ -6,6 +6,7 @@ package heffalump
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"sync"
 )
@@ -31,8 +32,7 @@ func NewHeffalump(mm MarkovMap, buffsize int) *Heffalump {
 	}
 }
 
-// NewDefaultHeffalump instantiates a new default Heffalump from a MarkovMap created using
-// using the default source text.
+// NewDefaultHeffalump instantiates a new default Heffalump from a MarkovMap created using using the default source text.
 func NewDefaultHeffalump() *Heffalump {
 	return NewHeffalump(NewDefaultMarkovMap(), DefaultBuffSize)
 }
@@ -42,7 +42,10 @@ func (h *Heffalump) WriteHell(bw *bufio.Writer) (int64, error) {
 	var n int64
 	var err error
 
-	buf := h.pool.Get().([]byte)
+	buf, ok := h.pool.Get().([]byte)
+	if !ok {
+		panic("buffer pool type assertion failed, retrieved type is a " + fmt.Sprintf("%T", buf))
+	}
 
 	if _, err = bw.WriteString("<html>\n<body>\n"); err != nil {
 		h.pool.Put(buf)

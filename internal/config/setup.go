@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/knadh/koanf/parsers/toml"
@@ -24,7 +23,17 @@ func (r *readerProvider) Read() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return toml.Parser().Unmarshal(b) //nolint:wrapcheck
+	vals, err := toml.Parser().Unmarshal(b)
+	if len(vals) == 0 {
+		err = io.ErrUnexpectedEOF
+	}
+	if err != nil {
+		println(err.Error())
+	}
+	for k, v := range vals {
+		println(k, v)
+	}
+	return vals, err //nolint:wrapcheck
 }
 
 func Setup(source io.Reader) (*Parameters, error) {
@@ -40,7 +49,9 @@ func Setup(source io.Reader) (*Parameters, error) {
 		}
 	}
 
-	_ = k.Load(env.Provider("HELLPOT_", ".", func(s string) string {
+	envK := koanf.New(".")
+
+	envErr := envK.Load(env.Provider("HELLPOT_", ".", func(s string) string {
 		s = strings.TrimPrefix(s, "HELLPOT_")
 		s = strings.ToLower(s)
 		s = strings.ReplaceAll(s, "__", " ")
@@ -49,6 +60,12 @@ func Setup(source io.Reader) (*Parameters, error) {
 		return s
 	}), nil)
 
+	if envErr == nil && envK != nil && len(envK.All()) > 0 {
+		if err := k.Merge(envK); err != nil {
+			return nil, fmt.Errorf("failed to merge env config: %w", err)
+		}
+	}
+
 	p := &Parameters{
 		source: k,
 	}
@@ -56,8 +73,6 @@ func Setup(source io.Reader) (*Parameters, error) {
 	if err := k.Unmarshal("", p); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
-
-	p.Logger.Outputs = append(p.Logger.Outputs, os.Stdout)
 
 	return p, nil
 }
