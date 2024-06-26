@@ -10,17 +10,14 @@ import (
 	"github.com/yunginnanet/HellPot/internal/version"
 )
 
-var CLIFlags = flag.NewFlagSet("cli", flag.ExitOnError)
+var CLIFlags = flag.NewFlagSet("config", flag.ExitOnError)
 
-func init() {
+func InitCLI() {
+	newArgs := make([]string, 0)
 	for _, arg := range os.Args {
 		// check for unit test flags
-		if strings.Contains(arg, "test.testlogfile") {
-			// we're in a unit test, bail
-			return
-		}
-		if strings.Contains(arg, "test.v") {
-			return
+		if !strings.HasPrefix(arg, "-test.") {
+			newArgs = append(newArgs, arg)
 		}
 	}
 
@@ -36,9 +33,17 @@ func init() {
 	CLIFlags.String("config", "", "specify config file")
 	CLIFlags.String("version", "", "show version and exit")
 	CLIFlags.String("v", "", "show version and exit")
-	if err := CLIFlags.Parse(os.Args[1:]); err != nil {
+	if err := CLIFlags.Parse(newArgs[1:]); err != nil {
 		println(err.Error())
 		// flag.ExitOnError will call os.Exit(2)
+	}
+	if os.Getenv("HELLPOT_CONFIG") != "" {
+		if err := CLIFlags.Set("config", os.Getenv("HELLPOT_CONFIG")); err != nil {
+			panic(err)
+		}
+		if err := CLIFlags.Set("c", os.Getenv("HELLPOT_CONFIG")); err != nil {
+			panic(err)
+		}
 	}
 	if CLIFlags.Lookup("h").Value.String() == "true" || CLIFlags.Lookup("help").Value.String() == "true" {
 		CLIFlags.Usage()

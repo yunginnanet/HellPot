@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -18,23 +19,32 @@ import (
 	"github.com/yunginnanet/HellPot/internal/logger"
 )
 
-func writeConfig(target string) bool {
+func writeConfig(target string) (*config.Parameters, bool) {
 	var f *os.File
 	var err error
 	f, err = os.Create(target) // #nosec G304 -- go home gosec, you're drunk
 	if err != nil {
 		println("failed to create config file: " + err.Error())
-		return false
+		return nil, false
 	}
 	if _, err = io.Copy(f, config.Defaults.IO); err != nil {
 		println("failed to write default config to file: " + err.Error())
 		_ = f.Close()
-		return false
+		return nil, false
+	}
+	if err = f.Sync(); err != nil {
+		panic(err)
 	}
 	println("wrote default config to " + target)
-	runningConfig, _ = config.Setup(f)
+	var newConf *config.Parameters
+	newConf, err = config.Setup(f)
+	if err != nil {
+		println("failed to setup config with newly written file: " + err.Error())
+		_ = f.Close()
+		return nil, false
+	}
 	_ = f.Close()
-	return true
+	return newConf, true
 }
 
 func searchConfig() string {
@@ -74,13 +84,15 @@ func readConfig(resolvedConf string) error {
 	switch {
 	case setupErr != nil:
 		println("failed to setup config: " + setupErr.Error())
+		_ = f.Close()
 		err = setupErr
 	case err != nil:
 		println("failed to open config file for reading: " + err.Error())
 		println("trying to create it....")
-		wroteOK := writeConfig(resolvedConf)
+		newRunningConfig, wroteOK := writeConfig(resolvedConf)
 		if wroteOK {
-			break
+			runningConfig = newRunningConfig
+			return nil
 		}
 		println("failed to create config file, cannot continue")
 		return fmt.Errorf("failed to create config file: %w", err)
@@ -92,10 +104,18 @@ func readConfig(resolvedConf string) error {
 }
 
 func resolveConfig() (usingDefaults bool, resolvedConf string, err error) {
-	if config.CLIFlags != nil {
-		confRoot := config.CLIFlags.Lookup("config")
+	setIfPresent := func(confRoot *flag.Flag) (ok bool) {
 		if confRoot != nil && confRoot.Value.String() != "" {
 			resolvedConf = confRoot.Value.String()
+			return true
+		}
+		return false
+	}
+	if config.CLIFlags != nil {
+		confRoot := config.CLIFlags.Lookup("config")
+		if !setIfPresent(confRoot) {
+			confRoot = config.CLIFlags.Lookup("c")
+			setIfPresent(confRoot)
 		}
 	}
 
@@ -125,9 +145,15 @@ func resolveConfig() (usingDefaults bool, resolvedConf string, err error) {
 }
 
 func setup(stopChan chan os.Signal) (log zerolog.Logger, logFile string, resolvedConf string, err error) {
+	config.InitCLI()
 	var usingDefaults bool
 
 	if usingDefaults, resolvedConf, err = resolveConfig(); err != nil {
+		return
+	}
+
+	if runningConfig == nil {
+		err = errors.New("running configuration is nil, cannot continue")
 		return
 	}
 
@@ -156,5 +182,10 @@ func setup(stopChan chan os.Signal) (log zerolog.Logger, logFile string, resolve
 	}
 
 	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
+
+	if absResolvedConf, err := filepath.Abs(resolvedConf); err == nil {
+		resolvedConf = absResolvedConf
+	}
+
 	return
 }
