@@ -26,4 +26,5 @@ require (
 	github.com/savsgio/gotils v0.0.0-20240303185622-093b76447511 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
+	nullprogram.com/x/rng v1.1.0 // indirect
 )
