@@ -23,17 +23,7 @@ func (r *readerProvider) Read() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	vals, err := toml.Parser().Unmarshal(b)
-	if len(vals) == 0 {
-		err = io.ErrUnexpectedEOF
-	}
-	if err != nil {
-		println(err.Error())
-	}
-	for k, v := range vals {
-		println(k, v)
-	}
-	return vals, err //nolint:wrapcheck
+	return toml.Parser().Unmarshal(b) //nolint:wrapcheck
 }
 
 func Setup(source io.Reader) (*Parameters, error) {
