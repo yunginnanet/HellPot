@@ -6,6 +6,7 @@ import (
 )
 
 func TestSetup(t *testing.T) {
+	t.Setenv("HELLPOT_TEST_MODE", "true")
 	t.Run("Success", SetupSuccess)
 	t.Run("NoFailureOnNilSource", SetupNoFailureOnNilSource)
 	t.Run("FailureOnReadConfig", SetupFailureOnReadConfig)
@@ -20,6 +21,10 @@ bind_addr = "5.5.5.5"
 [http.router]
 catchall = true
 makerobots = false
+
+[logger]
+debug = true
+rsyslog_address = "local"
 `)
 
 	params, err := Setup(source)
@@ -49,7 +54,24 @@ makerobots = false
 	if params.HTTP.Router.CatchAll != true {
 		t.Errorf("Expected true, got %v", params.HTTP.Router.CatchAll)
 	}
-
+	if params.source.Get("http.router.makerobots") != false {
+		t.Errorf("Expected false, got %v", params.source.Get("http.router.makerobots"))
+	}
+	if params.HTTP.Router.MakeRobots != false {
+		t.Errorf("Expected false, got %v", params.HTTP.Router.MakeRobots)
+	}
+	if params.source.Get("logger.debug") != true {
+		t.Errorf("Expected true, got %v", params.source.Get("logger.debug"))
+	}
+	if params.Logger.Debug != true {
+		t.Errorf("Expected true, got %v", params.Logger.Debug)
+	}
+	if params.source.Get("logger.rsyslog_address") != "local" {
+		t.Errorf("Expected local, got %v", params.source.Get("logger.rsyslog_address"))
+	}
+	if params.Logger.RSyslog != "local" {
+		t.Errorf("Expected local, got %v", params.Logger.RSyslog)
+	}
 }
 
 func SetupNoFailureOnNilSource(t *testing.T) {

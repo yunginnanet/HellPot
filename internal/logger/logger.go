@@ -7,6 +7,8 @@ import (
 	"log/syslog"
 	"os"
 	"path/filepath"
+	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -23,18 +25,88 @@ type Configuration struct {
 	DockerLogging bool `koanf:"docker_logging"`
 	// ConsoleTimeFormat sets the time format for the console.
 	// The string is passed to time.Format() down the line.
-	ConsoleTimeFormat string
+	ConsoleTimeFormat string `koanf:"console_time_format"`
 
 	// TimeDateFilename sets the log file name to include the date and time.
 	TimeDateFilename bool `koanf:"use_date_filename"`
 
-	Directory string `koanf:"directory"`
-	File      string `koanf:"log_file"`
-	RSyslog   string `koanf:"rsyslog_address"`
+	Directory     string `koanf:"directory"`
+	File          string `koanf:"log_file"`
+	RSyslog       string `koanf:"rsyslog_address"`
+	rsyslogTarget string
 
 	ActiveLogFileName string `koanf:"active_log_file_name"`
 
 	Outputs []io.Writer `koanf:"-"`
+}
+
+func (c *Configuration) Set(k string, v any) error {
+	k = strings.ToLower(k)
+	k = strings.TrimPrefix(k, "logger.")
+	k = strings.ReplaceAll(k, "__", "_")
+	k = strings.ReplaceAll(k, ".", "_")
+
+	ref := reflect.ValueOf(c)
+	if ref.Kind() != reflect.Ptr {
+		panic("not a pointer")
+	}
+	ref = ref.Elem()
+	if ref.Kind() != reflect.Struct {
+		panic("not a struct")
+	}
+
+	var field reflect.Value
+
+	for i := 0; i < ref.NumField(); i++ {
+		strutTag := ref.Type().Field(i).Tag.Get("koanf")
+		if strings.ToLower(strutTag) == strings.ToLower(k) {
+			field = ref.Field(i)
+			break
+		}
+	}
+
+	if field == (reflect.Value{}) {
+		return fmt.Errorf("field %s does not exist", k)
+	}
+
+	if !field.CanSet() {
+		return fmt.Errorf("field %s cannot be set", k)
+	}
+
+	switch field.Kind() {
+	case reflect.Bool:
+		if vstr, vstrok := v.(string); vstrok {
+			if vb, err := strconv.ParseBool(vstr); err == nil {
+				field.SetBool(vb)
+				return nil
+			}
+		}
+		if b, ok := v.(bool); ok {
+			field.SetBool(b)
+			return nil
+		}
+		return fmt.Errorf("field %s is not a bool", k)
+	case reflect.String:
+		if s, ok := v.(string); ok {
+			field.SetString(s)
+			return nil
+		}
+		return fmt.Errorf("field %s is not a string", k)
+	case reflect.Slice:
+		if s, ok := v.([]string); ok {
+			field.Set(reflect.ValueOf(s))
+			return nil
+		}
+		return fmt.Errorf("field %s is not a slice", k)
+	case reflect.Int:
+		if i, ok := v.(int); ok {
+			field.SetInt(int64(i))
+			return nil
+		}
+		return fmt.Errorf("field %s is not an int", k)
+	default:
+		return fmt.Errorf("field %s is not a supported type (%T)", k, v)
+	}
 }
 
 func (c *Configuration) findFallbackDir() error {
@@ -143,7 +215,10 @@ func (c *Configuration) setupDirAndFile() error {
 	return nil
 }
 
-func (c *Configuration) setupSyslog() error {
+func (c *Configuration) setupSyslog() (error, bool) {
+	if c.RSyslog == "" {
+		return nil, false
+	}
 	var (
 		err   error
 		proto string
@@ -151,6 +226,9 @@ func (c *Configuration) setupSyslog() error {
 		conn  *syslog.Writer
 	)
 	switch {
+	case strings.ToLower(c.RSyslog) == "local":
+		proto = ""
+		addr = ""
 	case strings.Contains(c.RSyslog, "://"):
 		proto = strings.Split(c.RSyslog, "://")[0]
 		addr = strings.Split(c.RSyslog, "://")[1]
@@ -161,24 +239,37 @@ func (c *Configuration) setupSyslog() error {
 		proto = "udp"
 		addr = c.RSyslog + ":514"
 	}
-	if conn, err = syslog.Dial(proto, addr, syslog.LOG_INFO, "HellPot"); err != nil {
-		return fmt.Errorf("failed to dial syslog server: %w", err)
+
+	if proto != "" && addr != "" {
+		println("dialing syslog server: " + c.rsyslogTarget + "...")
 	}
+
+	syslogLogLevel := syslog.LOG_INFO
+	if c.Debug || c.Trace {
+		syslogLogLevel = syslog.LOG_DEBUG
+	}
+
+	if conn, err = syslog.Dial(proto, addr, syslogLogLevel, "HellPot"); err != nil {
+		return fmt.Errorf("failed to dial syslog server: %w", err), false
+	}
+
+	c.rsyslogTarget = proto + "://" + addr
 
 	c.Outputs = append(c.Outputs, zerolog.SyslogLevelWriter(conn))
 
-	return nil
+	return nil, true
 }
 
-func (c *Configuration) SetupOutputs() error {
+func (c *Configuration) SetupOutputs() (err error, rsyslogEnabled bool) {
 	if c.Directory != "" || c.File != "" {
-		if err := c.setupDirAndFile(); err != nil {
-			return fmt.Errorf("failed to setup log file: %w", err)
+		if err = c.setupDirAndFile(); err != nil {
+			return fmt.Errorf("failed to setup log file: %w", err), false
 		}
 	}
+
 	if c.RSyslog != "" {
-		if err := c.setupSyslog(); err != nil {
-			return fmt.Errorf("failed to setup syslog: %w", err)
+		if err, rsyslogEnabled = c.setupSyslog(); err != nil {
+			return fmt.Errorf("failed to setup syslog: %w", err), false
 		}
 	}
 
@@ -186,7 +277,7 @@ func (c *Configuration) SetupOutputs() error {
 
 	for _, out := range c.Outputs {
 		if out == nil {
-			return fmt.Errorf("nil output provided")
+			return fmt.Errorf("nil output provided"), false
 		}
 		if out == os.Stdout || out == os.Stderr {
 			consoleSeen = true
@@ -197,7 +288,7 @@ func (c *Configuration) SetupOutputs() error {
 		c.Outputs = append(c.Outputs, os.Stdout)
 	}
 
-	return nil
+	return nil, rsyslogEnabled
 }
 
 var once = &sync.Once{}
@@ -228,7 +319,9 @@ func New(conf *Configuration) (zerolog.Logger, error) {
 	if err := conf.Validate(); err != nil {
 		return zerolog.Logger{}, fmt.Errorf("invalid logger configuration: %w", err)
 	}
-	if err := conf.SetupOutputs(); err != nil {
+	var err error
+	var rsyslogEnabled bool
+	if err, rsyslogEnabled = conf.SetupOutputs(); err != nil {
 		return zerolog.Logger{}, fmt.Errorf("failed to setup logger outputs: %w", err)
 	}
 	for i, output := range conf.Outputs {
@@ -246,5 +339,10 @@ func New(conf *Configuration) (zerolog.Logger, error) {
 	if conf.Trace {
 		_log = _log.Level(zerolog.TraceLevel)
 	}
+
+	if rsyslogEnabled {
+		_log.Info().Str("target", conf.rsyslogTarget).Msg("remote syslog connection established")
+	}
+
 	return _log, nil
 }

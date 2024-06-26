@@ -13,6 +13,7 @@ import (
 )
 
 func testMain(t *testing.T) (string, string, chan os.Signal, *config.Parameters, error) {
+	t.Setenv("HELLPOT_TEST_MODE", "true")
 	t.Helper()
 	stopChan := make(chan os.Signal, 1)
 
@@ -39,6 +40,7 @@ func TestHellPot(t *testing.T) {
 	}
 	confFile := filepath.Join(tDir, "HellPot_test.toml")
 	t.Setenv("HELLPOT_LOGGER_DIRECTORY", logDir)
+	t.Setenv("HELLPOT_LOGGER_RSYSLOG_ADDRESS", "local")
 	t.Setenv("HELLPOT_CONFIG", confFile)
 
 	resolvedConf, logFile, stopChan, realConfig, err := testMain(t)

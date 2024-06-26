@@ -21,6 +21,7 @@ func TestDefaults(t *testing.T) {
 			"http",
 			"performance",
 			"deception",
+			"bespoke",
 		} {
 			total += bytes.Count(bs, []byte(needle)) + 3 // name plus brackets and newline
 			if !bytes.Contains(bs, []byte(needle)) {

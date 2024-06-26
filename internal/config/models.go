@@ -11,11 +11,11 @@ import (
 
 // Parameters represents the configuration for HellPot.
 type Parameters struct {
-	HTTP    HTTP                  `koanf:"http"`
-	Logger  *logger.Configuration `koanf:"logger"`
-	Bespoke Customization         `koanf:"bespoke"`
-	Perf    Performance           `koanf:"performance"`
-	Liar    Deception             `koanf:"deception"`
+	HTTP    HTTP                 `koanf:"http"`
+	Logger  logger.Configuration `koanf:"logger"`
+	Bespoke Customization        `koanf:"bespoke"`
+	Perf    Performance          `koanf:"performance"`
+	Liar    Deception            `koanf:"deception"`
 
 	IdleHands DevilsPlaythings `koanf:"experimental"`
 

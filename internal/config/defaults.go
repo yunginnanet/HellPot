@@ -54,6 +54,7 @@ var defOpts = map[string]interface{}{
 		"noconsole":           false,
 		"use_date_filename":   false,
 		"docker_logging":      false,
+		"rsyslog_address":     "",
 		"console_time_format": time.Kitchen,
 	},
 	"http": map[string]interface{}{

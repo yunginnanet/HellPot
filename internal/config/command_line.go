@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/yunginnanet/HellPot/internal/extra"
@@ -87,6 +88,30 @@ func InitCLI() {
 		println(err.Error())
 		os.Exit(2)
 	}
+
+	for defaultKey, defaultVal := range Defaults.val {
+		switch defaultVal.(type) {
+		case bool:
+			parsedBool, pErr := strconv.ParseBool(CLIFlags.Lookup(defaultKey).Value.String())
+			if pErr != nil {
+				continue
+			}
+			if parsedBool == Defaults.val[defaultKey].(bool) {
+				fl := CLIFlags.Lookup(defaultKey)
+				*fl = flag.Flag{}
+				fl = nil
+			}
+		case string:
+			if CLIFlags.Lookup(defaultKey).Value.String() == Defaults.val[defaultKey].(string) ||
+				CLIFlags.Lookup(defaultKey).Value.String() == "" {
+				fl := CLIFlags.Lookup(defaultKey)
+				*fl = flag.Flag{}
+				fl = nil
+			}
+		}
+
+	}
+
 	if os.Getenv("HELLPOT_CONFIG") != "" {
 		if err := CLIFlags.Set("config", os.Getenv("HELLPOT_CONFIG")); err != nil {
 			panic(err)

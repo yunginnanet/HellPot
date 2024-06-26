@@ -10,6 +10,8 @@ import (
 	flags "github.com/knadh/koanf/providers/basicflag"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/v2"
+
+	"github.com/yunginnanet/HellPot/internal/logger"
 )
 
 type readerProvider struct {
@@ -67,17 +69,21 @@ func (p *Parameters) merge(ogk *koanf.Koanf, newk *koanf.Koanf, friendlyName str
 		return nil
 	}
 
-	for k, v := range newKeys {
-		if !ogk.Exists(k) {
-			if err := ogk.Set(k, v); err != nil {
-				panic(fmt.Sprintf("failed to set key %s: %v", k, err))
-			}
-			dirty = true
-			continue
+	valIsEmpty := func(v any) bool {
+		switch v.(type) {
+		case string:
+			return v.(string) == ""
+		case []string:
+			return len(v.([]string)) == 0
+		default:
+			return false
 		}
+	}
 
+	for k, v := range newKeys {
 		ogv := ogk.Get(k)
-		if ogv == nil {
+		if ogk.Exists(k) && valIsEmpty(ogv) && !valIsEmpty(v) {
+			println("setting newer value for key " + k + " to " + fmt.Sprintf("%v", v) + " from " + friendlyName)
 			if err := ogk.Set(k, v); err != nil {
 				panic(fmt.Sprintf("failed to set key %s: %v", k, err))
 			}
@@ -187,6 +193,17 @@ func Setup(source io.Reader) (*Parameters, error) {
 
 	if err := k.Unmarshal("", p); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	// for some reason the logger config pointer is not getting populated, do it manually
+	p.Logger = logger.Configuration{}
+	for k, v := range k.All() {
+		if strings.HasPrefix(k, "logger.") {
+			println("setting logger config key " + k + " to " + fmt.Sprintf("%v", v))
+			if err := p.Logger.Set(k, v); err != nil {
+				return nil, fmt.Errorf("failed to set logger config: %w", err)
+			}
+		}
 	}
 
 	return p, nil

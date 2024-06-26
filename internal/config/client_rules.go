@@ -8,10 +8,10 @@ import (
 
 type ClientRules struct {
 	// See: https://github.com/yunginnanet/HellPot/issues/23
-	UseragentDisallowStrings  []string         `koanf:"user_agent_disallow_strings"`
-	useragentDisallowStrBytes [][]byte         `koanf:"-"`
-	UseragentDisallowRegex    []string         `koanf:"user_agent_disallow_regex"`
-	useragentDisallowRegex    []*regexp.Regexp `koanf:"-"`
+	UseragentDisallowStrings  []string `koanf:"user_agent_disallow_strings"`
+	useragentDisallowStrBytes [][]byte
+	UseragentDisallowRegex    []string `koanf:"user_agent_disallow_regex"`
+	useragentDisallowRegex    []*regexp.Regexp
 }
 
 func NewClientRules(strs []string, regex []string) (*ClientRules, error) {
