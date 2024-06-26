@@ -19,6 +19,12 @@ import (
 	"github.com/yunginnanet/HellPot/internal/logger"
 )
 
+const (
+	defaultConfigWarningDelaySecs = 10
+	red                           = "\033[31m"
+	reset                         = "\033[0m"
+)
+
 func writeConfig(target string) (*config.Parameters, bool) {
 	var f *os.File
 	var err error
@@ -37,13 +43,13 @@ func writeConfig(target string) (*config.Parameters, bool) {
 	}
 	println("wrote default config to " + target)
 	var newConf *config.Parameters
-	newConf, err = config.Setup(f)
-	if err != nil {
+	if newConf, err = config.Setup(f); err != nil {
 		println("failed to setup config with newly written file: " + err.Error())
 		_ = f.Close()
 		return nil, false
 	}
 	_ = f.Close()
+	newConf.UsingDefaults = true
 	return newConf, true
 }
 
@@ -68,14 +74,16 @@ func searchConfig() string {
 	return resolvedConf
 }
 
-func readConfig(resolvedConf string) error {
+func readConfig(resolvedConf string) (*config.Parameters, error) {
 	var err error
 	var setupErr error
 	var f *os.File
 
 	if resolvedConf == "" {
-		return fmt.Errorf("%w: provided config file is an empty string", io.EOF)
+		return nil, fmt.Errorf("%w: provided config file is an empty string", io.EOF)
 	}
+
+	var runningConfig *config.Parameters
 
 	f, err = os.Open(resolvedConf) // #nosec G304 go home gosec, you're drunk
 	if err == nil {
@@ -84,26 +92,27 @@ func readConfig(resolvedConf string) error {
 	switch {
 	case setupErr != nil:
 		println("failed to setup config: " + setupErr.Error())
-		_ = f.Close()
+		if f != nil {
+			_ = f.Close()
+		}
 		err = setupErr
 	case err != nil:
 		println("failed to open config file for reading: " + err.Error())
 		println("trying to create it....")
 		newRunningConfig, wroteOK := writeConfig(resolvedConf)
 		if wroteOK {
-			runningConfig = newRunningConfig
-			return nil
+			return newRunningConfig, nil
 		}
 		println("failed to create config file, cannot continue")
-		return fmt.Errorf("failed to create config file: %w", err)
+		return nil, fmt.Errorf("failed to create config file: %w", err)
 	case runningConfig != nil:
 		_ = f.Close()
 	}
 
-	return err
+	return runningConfig, err
 }
 
-func resolveConfig() (usingDefaults bool, resolvedConf string, err error) {
+func resolveConfig() (runningConfig *config.Parameters, usingDefaults bool, resolvedConf string, err error) {
 	setIfPresent := func(confRoot *flag.Flag) (ok bool) {
 		if confRoot != nil && confRoot.Value.String() != "" {
 			resolvedConf = confRoot.Value.String()
@@ -127,8 +136,8 @@ func resolveConfig() (usingDefaults bool, resolvedConf string, err error) {
 		resolvedConf = searchConfig()
 	}
 
-	if err = readConfig(resolvedConf); err != nil && !errors.Is(err, io.EOF) {
-		return false, "", err
+	if runningConfig, err = readConfig(resolvedConf); err != nil && !errors.Is(err, io.EOF) {
+		return runningConfig, false, "", err
 	}
 
 	if runningConfig == nil {
@@ -136,25 +145,38 @@ func resolveConfig() (usingDefaults bool, resolvedConf string, err error) {
 			if err == nil {
 				err = errors.New("unknown failure resulting in missing configuration, cannot continue")
 			}
-			return false, "", err
+			return runningConfig, false, "", err
 		}
-		return true, "", nil
+		return runningConfig, true, "", nil
 	}
 
-	return false, resolvedConf, nil
+	return runningConfig, false, resolvedConf, nil
 }
 
-func setup(stopChan chan os.Signal) (log zerolog.Logger, logFile string, resolvedConf string, err error) {
-	config.InitCLI()
-	var usingDefaults bool
+func setup(stopChan chan os.Signal) (log zerolog.Logger, logFile string,
+	resolvedConf string, realConf *config.Parameters, err error) {
 
-	if usingDefaults, resolvedConf, err = resolveConfig(); err != nil {
+	config.InitCLI()
+
+	var usingDefaults bool
+	var runningConfig *config.Parameters
+
+	if runningConfig, usingDefaults, resolvedConf, err = resolveConfig(); err != nil {
 		return
 	}
 
 	if runningConfig == nil {
 		err = errors.New("running configuration is nil, cannot continue")
 		return
+	}
+
+	// TODO: jesus bro r u ok
+	realConf = runningConfig
+	if usingDefaults && !realConf.UsingDefaults {
+		realConf.UsingDefaults = true
+	}
+	if realConf.UsingDefaults && !usingDefaults {
+		usingDefaults = true
 	}
 
 	//goland:noinspection GoNilness // we check for nil above
@@ -165,15 +187,16 @@ func setup(stopChan chan os.Signal) (log zerolog.Logger, logFile string, resolve
 	logFile = runningConfig.Logger.ActiveLogFileName
 
 	if usingDefaults {
-		runningConfig.UsingDefaults = true
-		log.Warn().Msg("continuing with default configuration in ")
-		for i := 5; i > 0; i-- {
+		log.Warn().Msg("using default configuration!")
+		print(red + "continuing with default configuration in ")
+		for i := defaultConfigWarningDelaySecs; i > 0; i-- {
 			print(strconv.Itoa(i))
 			for i := 0; i < 5; i++ {
 				time.Sleep(200 * time.Millisecond)
 				print(".")
 			}
 		}
+		print(reset + "\n")
 	}
 
 	if //goland:noinspection GoNilness
