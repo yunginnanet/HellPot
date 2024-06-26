@@ -46,7 +46,6 @@ func (c *Configuration) findFallbackDir() error {
 	var errs []error
 
 	for _, loc := range locs {
-		println("checking", loc)
 		if _, err = os.Stat(loc); err == nil {
 			var locStat os.FileInfo
 			if locStat, err = os.Stat(filepath.Join(loc, "HellPot")); err == nil {
