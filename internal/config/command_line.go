@@ -91,9 +91,6 @@ func InitCLI() {
 		if err := CLIFlags.Set("config", os.Getenv("HELLPOT_CONFIG")); err != nil {
 			panic(err)
 		}
-		if err := CLIFlags.Set("c", os.Getenv("HELLPOT_CONFIG")); err != nil {
-			panic(err)
-		}
 	}
 	if CLIFlags.Lookup("help").Value.String() == "true" {
 		CLIFlags.Usage()

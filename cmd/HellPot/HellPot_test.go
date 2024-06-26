@@ -23,7 +23,7 @@ func testMain(t *testing.T) (string, string, chan os.Signal, *config.Parameters,
 			terr := http.Serve(realConfig)
 			if terr != nil {
 				t.Error("failed to serve HTTP: " + terr.Error())
-				close(stopChan)
+				return
 			}
 		}()
 	}
