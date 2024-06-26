@@ -134,6 +134,11 @@ func SetupHeffalump(config *config.Parameters) error {
 			return fmt.Errorf("%w: grimoire file '%s' appears to be empty", io.EOF, config.Bespoke.Grimoire)
 		}
 
+		if !strings.Contains(src, "<") || !strings.Contains(src, ">") {
+			return fmt.Errorf("%w: grimoire file '%s' does not appear to be a valid source text, missing brackets",
+				io.ErrUnexpectedEOF, config.Bespoke.Grimoire)
+		}
+
 		markovMap := heffalump.MakeMarkovMap(strings.NewReader(src))
 		hellpotHeffalump = heffalump.NewHeffalump(markovMap, heffalump.DefaultBuffSize)
 	default:
