@@ -60,7 +60,7 @@ func (c *Configuration) findFallbackDir() error {
 				errs = append(errs, err)
 			}
 
-			if err = os.MkdirAll(filepath.Join(loc, "HellPot"), 0755); err == nil {
+			if err = os.MkdirAll(filepath.Join(loc, "HellPot"), 0750); err == nil {
 				c.Directory = filepath.Join(loc, "HellPot")
 				c.File = "HellPot.log"
 				return nil
@@ -99,7 +99,7 @@ func (c *Configuration) setupDirAndFile() error {
 			return fmt.Errorf("failed to access specified log directory: %w", err)
 		}
 		if errors.Is(err, os.ErrNotExist) {
-			if err = os.MkdirAll(c.Directory, 0755); err != nil {
+			if err = os.MkdirAll(c.Directory, 0750); err != nil {
 				return fmt.Errorf("failed to create specified log directory: %w", err)
 			}
 		}
@@ -116,7 +116,7 @@ func (c *Configuration) setupDirAndFile() error {
 			return fmt.Errorf("failed to access specified log directory: %w", err)
 		}
 		if errors.Is(err, os.ErrNotExist) {
-			if err = os.MkdirAll(filepath.Dir(c.File), 0755); err != nil {
+			if err = os.MkdirAll(filepath.Dir(c.File), 0750); err != nil {
 				return fmt.Errorf("failed to create specified log directory: %w", err)
 			}
 		}
