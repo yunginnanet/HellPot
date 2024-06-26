@@ -85,7 +85,7 @@ type MarkovMap struct {
 // MakeMarkovMap makes an empty MakeMarkov and fills it with r.
 func MakeMarkovMap(r io.Reader) MarkovMap {
 	m := MarkovMap{m: make(map[tokenPair][]string)}
-	m.r = rand.New(rand.NewSource(entropy.GetOptimizedRand().Int63()))
+	m.r = rand.New(rand.NewSource(entropy.GetOptimizedRand().Int63())) // #nosec: G404 : speed not security
 	m.Fill(r)
 	return m
 }
