@@ -11,8 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/rs/zerolog"
-
 	"github.com/yunginnanet/HellPot/internal/config"
 	"github.com/yunginnanet/HellPot/internal/extra"
 	"github.com/yunginnanet/HellPot/internal/logger"
@@ -114,23 +112,64 @@ func readConfig(resolvedConf string) (*config.Parameters, error) {
 	return runningConfig, err
 }
 
+type configDetail struct {
+	runningConfig *config.Parameters
+	usingDefaults bool
+	resolvedConf  string
+}
+
+func loadCLIConfig() (detail configDetail, err error) {
+	conf := config.CLIFlags.Lookup("config")
+	detail = configDetail{}
+	detail.resolvedConf = conf.Value.String()
+	detail.runningConfig, err = readConfig(detail.resolvedConf)
+	detail.usingDefaults = false
+	return
+}
+
+func loadEnvConfig() (detail configDetail, err error) {
+	detail = configDetail{}
+	detail.resolvedConf = os.Getenv("HELLPOT_CONFIG_FILE")
+	detail.runningConfig, err = readConfig(detail.resolvedConf)
+	detail.usingDefaults = false
+	return
+}
+
 func resolveConfig() (runningConfig *config.Parameters, usingDefaults bool, resolvedConf string, err error) {
-	if config.CLIFlags != nil {
-		conf := config.CLIFlags.Lookup("config")
-		if conf != nil && conf.Value.String() != "" {
-			resolvedConf = conf.Value.String()
-			if runningConfig, err = readConfig(resolvedConf); err != nil {
-				return runningConfig, false, resolvedConf, err
-			}
+	var cliConfigPath string
+	if config.CLIFlags != nil && config.CLIFlags.Lookup("config") != nil {
+		cliConfigPath = config.CLIFlags.Lookup("config").Value.String()
+	}
+
+	var detail configDetail
+
+try:
+	switch {
+	case cliConfigPath != "":
+		detail, err = loadCLIConfig()
+		if err == nil {
+			runningConfig = detail.runningConfig
+			usingDefaults = detail.usingDefaults
+			resolvedConf = detail.resolvedConf
+			return
 		}
-	}
-
-	if resolvedConf == "" && os.Getenv("HELLPOT_CONFIG_FILE") != "" {
-		resolvedConf = os.Getenv("HELLPOT_CONFIG_FILE")
-	}
-
-	if resolvedConf == "" {
-		resolvedConf = searchConfig()
+		println("failed to load config from CLI path: " + err.Error())
+		cliConfigPath = ""
+		goto try
+	case os.Getenv("HELLPOT_CONFIG_FILE") != "":
+		detail, err = loadEnvConfig()
+		if err == nil {
+			runningConfig = detail.runningConfig
+			usingDefaults = detail.usingDefaults
+			resolvedConf = detail.resolvedConf
+			return
+		}
+		println("failed to load config from env path: " + err.Error())
+		fallthrough
+	default:
+		if resolvedConf = searchConfig(); resolvedConf != "" {
+			usingDefaults = false
+		}
 	}
 
 	if runningConfig, err = readConfig(resolvedConf); err != nil && !errors.Is(err, io.EOF) {
@@ -150,17 +189,15 @@ func resolveConfig() (runningConfig *config.Parameters, usingDefaults bool, reso
 	return runningConfig, false, resolvedConf, nil
 }
 
-func initLogger(runningConfig *config.Parameters) (log zerolog.Logger, logFile string, err error) {
+func initLogger(runningConfig *config.Parameters) (log *logger.Log, err error) {
 	if log, err = logger.New(&runningConfig.Logger); err != nil {
 		return
 	}
 
-	logFile = runningConfig.Logger.ActiveLogFileName
-
 	return
 }
 
-func setup(stopChan chan os.Signal) (log zerolog.Logger, logFile string,
+func setup(stopChan chan os.Signal) (log *logger.Log,
 	resolvedConf string, runningConfig *config.Parameters, err error) {
 
 	config.InitCLI()
@@ -170,6 +207,10 @@ func setup(stopChan chan os.Signal) (log zerolog.Logger, logFile string,
 	defer func() {
 		if runningConfig == nil && err == nil {
 			err = errors.New("running configuration is nil, cannot continue")
+			return
+		}
+		if (runningConfig.GetLogger() == nil || runningConfig.GetLogger().Config == nil) && err == nil {
+			err = errors.New("running configuration logger is nil, cannot continue")
 			return
 		}
 		if usingDefaults && os.Getenv("HELLPOT_TEST_MODE") == "" {
@@ -187,7 +228,7 @@ func setup(stopChan chan os.Signal) (log zerolog.Logger, logFile string,
 		signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
 
 		if //goland:noinspection GoNilness
-		!runningConfig.Logger.NoColor {
+		!runningConfig.GetLogger().Config.NoColor {
 			extra.Banner()
 		}
 		if absResolvedConf, err := filepath.Abs(resolvedConf); err == nil {
@@ -200,14 +241,14 @@ func setup(stopChan chan os.Signal) (log zerolog.Logger, logFile string,
 		if runningConfig, usingDefaults, resolvedConf, err = resolveConfig(); err != nil {
 			return
 		}
-		log, logFile, err = initLogger(runningConfig)
+		log, err = initLogger(runningConfig)
 	default:
 		println("loading configuration file: " + config.CLIFlags.Lookup("config").Value.String())
 		if runningConfig, err = readConfig(config.CLIFlags.Lookup("config").Value.String()); err != nil {
 			return
 		}
 		resolvedConf = config.CLIFlags.Lookup("config").Value.String()
-		log, logFile, err = initLogger(runningConfig)
+		log, err = initLogger(runningConfig)
 	}
 	return
 }

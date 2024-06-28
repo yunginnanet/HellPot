@@ -12,15 +12,15 @@ import (
 	"time"
 
 	"github.com/fasthttp/router"
-	"github.com/rs/zerolog"
 	"github.com/valyala/fasthttp"
 
 	"github.com/yunginnanet/HellPot/heffalump"
 	"github.com/yunginnanet/HellPot/internal/config"
+	"github.com/yunginnanet/HellPot/internal/logger"
 )
 
 var (
-	log              *zerolog.Logger
+	log              *logger.Log
 	hellpotHeffalump *heffalump.Heffalump
 	runningConfig    *config.Parameters
 )

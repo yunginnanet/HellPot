@@ -16,6 +16,11 @@ import (
 	"github.com/rs/zerolog"
 )
 
+type Log struct {
+	zerolog.Logger
+	Config *Configuration
+}
+
 // Configuration represents the configuration for the logger.
 type Configuration struct {
 	Debug         bool `koanf:"debug"`
@@ -50,9 +55,15 @@ func (c *Configuration) Set(k string, v any) error {
 	if ref.Kind() != reflect.Ptr {
 		panic("not a pointer")
 	}
+
 	ref = ref.Elem()
+
+	if !ref.IsValid() {
+		panic("invalid pointer")
+	}
+
 	if ref.Kind() != reflect.Struct {
-		panic("not a struct")
+		panic("not a struct: " + ref.Kind().String())
 	}
 
 	var field reflect.Value
@@ -162,20 +173,20 @@ func (c *Configuration) Validate() error {
 	return nil
 }
 
-func (c *Configuration) setupDirAndFile() error {
+func (c *Configuration) setupDirAndFile() (string, error) {
 	switch {
 	case c.Directory != "":
 		stat, err := os.Stat(c.Directory)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("failed to access specified log directory: %w", err)
+			return "", fmt.Errorf("failed to access specified log directory: %w", err)
 		}
 		if errors.Is(err, os.ErrNotExist) {
 			if err = os.MkdirAll(c.Directory, 0750); err != nil {
-				return fmt.Errorf("failed to create specified log directory: %w", err)
+				return "", fmt.Errorf("failed to create specified log directory: %w", err)
 			}
 		}
 		if stat != nil && !stat.IsDir() {
-			return fmt.Errorf("specified log directory is not a directory")
+			return "", fmt.Errorf("specified log directory is not a directory")
 		}
 		if c.File == "" {
 			c.File = "HellPot.log"
@@ -183,18 +194,18 @@ func (c *Configuration) setupDirAndFile() error {
 	case c.Directory == "" && c.File != "":
 		stat, err := os.Stat(filepath.Dir(c.File))
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("failed to access specified log directory: %w", err)
+			return "", fmt.Errorf("failed to access specified log directory: %w", err)
 		}
 		if errors.Is(err, os.ErrNotExist) {
 			if err = os.MkdirAll(filepath.Dir(c.File), 0750); err != nil {
-				return fmt.Errorf("failed to create specified log directory: %w", err)
+				return "", fmt.Errorf("failed to create specified log directory: %w", err)
 			}
 		}
 		if stat != nil && !stat.IsDir() {
 			panic("specified log directory is not a directory, but it should be...? please report this issue on github")
 		}
 	case c.Directory == "" && c.File == "" && c.ActiveLogFileName == "" && c.RSyslog == "" && !c.DockerLogging:
-		return fmt.Errorf("no log directory or file specified")
+		return "", fmt.Errorf("no log directory or file specified")
 	}
 	var f *os.File
 	var err error
@@ -208,11 +219,11 @@ func (c *Configuration) setupDirAndFile() error {
 		)
 	}
 	if f, err = os.OpenFile(filepath.Join(c.Directory, c.File), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err != nil {
-		return fmt.Errorf("failed to open log file: %w", err)
+		return "", fmt.Errorf("failed to open log file: %w", err)
 	}
 	c.Outputs = append(c.Outputs, f)
 	c.ActiveLogFileName = f.Name()
-	return nil
+	return f.Name(), nil
 }
 
 func (c *Configuration) setupSyslog() (error, bool) {
@@ -253,23 +264,28 @@ func (c *Configuration) setupSyslog() (error, bool) {
 		return fmt.Errorf("failed to dial syslog server: %w", err), false
 	}
 
-	c.rsyslogTarget = proto + "://" + addr
+	c.rsyslogTarget = "syslog"
+	if proto != "" && addr != "" {
+		c.rsyslogTarget = proto + "://" + addr
+	}
 
 	c.Outputs = append(c.Outputs, zerolog.SyslogLevelWriter(conn))
 
 	return nil, true
 }
 
-func (c *Configuration) SetupOutputs() (err error, rsyslogEnabled bool) {
+func (c *Configuration) SetupOutputs() (rsyslogEnabled bool, err error) {
+	var logPath string
 	if c.Directory != "" || c.File != "" {
-		if err = c.setupDirAndFile(); err != nil {
-			return fmt.Errorf("failed to setup log file: %w", err), false
+		if logPath, err = c.setupDirAndFile(); err != nil {
+			return false, fmt.Errorf("failed to setup log file: %w", err)
 		}
+		c.ActiveLogFileName = logPath
 	}
 
 	if c.RSyslog != "" {
 		if err, rsyslogEnabled = c.setupSyslog(); err != nil {
-			return fmt.Errorf("failed to setup syslog: %w", err), false
+			return false, fmt.Errorf("failed to setup syslog: %w", err)
 		}
 	}
 
@@ -277,10 +293,11 @@ func (c *Configuration) SetupOutputs() (err error, rsyslogEnabled bool) {
 
 	for _, out := range c.Outputs {
 		if out == nil {
-			return fmt.Errorf("nil output provided"), false
+			return false, fmt.Errorf("nil output provided")
 		}
 		if out == os.Stdout || out == os.Stderr {
 			consoleSeen = true
+			break
 		}
 	}
 
@@ -288,15 +305,18 @@ func (c *Configuration) SetupOutputs() (err error, rsyslogEnabled bool) {
 		c.Outputs = append(c.Outputs, os.Stdout)
 	}
 
-	return nil, rsyslogEnabled
+	return rsyslogEnabled, nil
 }
 
 var once = &sync.Once{}
 
-func GetLoggerOnce() *zerolog.Logger {
-	var ret *zerolog.Logger
+func GetLoggerOnce() *Log {
+	var ret *Log
 	once.Do(func() {
-		ret = &_log
+		if _log == nil {
+			panic("early access to logger")
+		}
+		ret = _log
 	})
 	if ret == nil {
 		panic("i said once you fool")
@@ -313,35 +333,37 @@ var (
 	)
 )
 
-var _log zerolog.Logger
+var _log *Log
 
-func New(conf *Configuration) (zerolog.Logger, error) {
+func New(conf *Configuration) (*Log, error) {
 	if err := conf.Validate(); err != nil {
-		return zerolog.Logger{}, fmt.Errorf("invalid logger configuration: %w", err)
+		return nil, fmt.Errorf("invalid logger configuration: %w", err)
 	}
 	var err error
 	var rsyslogEnabled bool
-	if err, rsyslogEnabled = conf.SetupOutputs(); err != nil {
-		return zerolog.Logger{}, fmt.Errorf("failed to setup logger outputs: %w", err)
+	if rsyslogEnabled, err = conf.SetupOutputs(); err != nil {
+		return nil, fmt.Errorf("failed to setup logger outputs: %w", err)
 	}
 	for i, output := range conf.Outputs {
 		if output == os.Stdout || output == os.Stderr {
 			cw := zerolog.ConsoleWriter{Out: output, TimeFormat: conf.ConsoleTimeFormat, NoColor: conf.NoColor}
-			conf.Outputs = append(conf.Outputs[:i], conf.Outputs[i+1:]...)
-			conf.Outputs = append(conf.Outputs, cw)
+			conf.Outputs[i] = cw
 		}
 	}
-	_log = zerolog.New(zerolog.MultiLevelWriter(conf.Outputs...)).With().Timestamp().Logger()
-	_log = _log.Level(zerolog.InfoLevel)
+	_log = &Log{Logger: zerolog.New(zerolog.MultiLevelWriter(conf.Outputs...)).With().Timestamp().Logger(), Config: conf}
+	_log.Logger = _log.Level(zerolog.InfoLevel)
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	if conf.Debug {
-		_log = _log.Level(zerolog.DebugLevel)
+		_log.Logger = _log.Level(zerolog.DebugLevel)
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 	if conf.Trace {
-		_log = _log.Level(zerolog.TraceLevel)
+		_log.Logger = _log.Level(zerolog.TraceLevel)
+		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	}
 
 	if rsyslogEnabled {
-		_log.Info().Str("target", conf.rsyslogTarget).Msg("remote syslog connection established")
+		_log.Info().Str("target", conf.rsyslogTarget).Msg("syslog connection established")
 	}
 
 	return _log, nil

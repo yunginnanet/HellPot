@@ -8,7 +8,7 @@ import (
 
 func main() {
 	stopChan := make(chan os.Signal, 1)
-	log, _, resolvedConf, realConf, err := setup(stopChan)
+	log, resolvedConf, realConf, err := setup(stopChan)
 
 	if err != nil {
 		println("failed to start: " + err.Error())

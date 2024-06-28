@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/knadh/koanf/v2"
-	"github.com/rs/zerolog"
 
 	"github.com/yunginnanet/HellPot/internal/logger"
 )
@@ -20,13 +19,13 @@ type Parameters struct {
 	IdleHands DevilsPlaythings `koanf:"experimental"`
 
 	source        *koanf.Koanf
-	logger        *zerolog.Logger
+	logger        *logger.Log
 	UsingDefaults bool
 }
 
 var once = &sync.Once{}
 
-func (p *Parameters) GetLogger() *zerolog.Logger {
+func (p *Parameters) GetLogger() *logger.Log {
 	once.Do(func() {
 		p.logger = logger.GetLoggerOnce()
 	})

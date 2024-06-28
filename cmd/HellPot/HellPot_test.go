@@ -10,14 +10,15 @@ import (
 
 	"github.com/yunginnanet/HellPot/internal/config"
 	"github.com/yunginnanet/HellPot/internal/http"
+	"github.com/yunginnanet/HellPot/internal/logger"
 )
 
-func testMain(t *testing.T) (string, string, chan os.Signal, *config.Parameters, error) {
+func testMain(t *testing.T) (string, chan os.Signal, *logger.Log, *config.Parameters, error) {
 	t.Setenv("HELLPOT_TEST_MODE", "true")
 	t.Helper()
 	stopChan := make(chan os.Signal, 1)
 
-	log, logFile, resolvedConf, realConfig, err := setup(stopChan)
+	log, resolvedConf, realConfig, err := setup(stopChan)
 	if err == nil {
 		printInfo(log, resolvedConf, realConfig)
 		go func() {
@@ -29,7 +30,7 @@ func testMain(t *testing.T) (string, string, chan os.Signal, *config.Parameters,
 		}()
 	}
 	//goland:noinspection GoNilness
-	return resolvedConf, logFile, stopChan, realConfig, err
+	return resolvedConf, stopChan, log, realConfig, err
 }
 
 func TestHellPot(t *testing.T) {
@@ -40,13 +41,24 @@ func TestHellPot(t *testing.T) {
 	}
 	confFile := filepath.Join(tDir, "HellPot_test.toml")
 	t.Setenv("HELLPOT_LOGGER_DIRECTORY", logDir)
-	t.Setenv("HELLPOT_LOGGER_RSYSLOG_ADDRESS", "local")
+	t.Setenv("HELLPOT_LOGGER_RSYSLOG__ADDRESS", "local")
+	t.Setenv("HELLPOT_LOGGER_DEBUG", "true")
 	t.Setenv("HELLPOT_CONFIG", confFile)
 
-	resolvedConf, logFile, stopChan, realConfig, err := testMain(t)
+	resolvedConf, stopChan, log, realConfig, err := testMain(t)
+
 	if err != nil {
 		t.Fatal(err)
 	}
+	if log == nil {
+		t.Fatal("log is nil")
+	}
+	if realConfig == nil {
+		t.Fatal("realConfig is nil")
+	}
+
+	logFile := log.Config.ActiveLogFileName
+
 	if stopChan == nil {
 		t.Fatal("stopChan is nil")
 	}
@@ -79,7 +91,7 @@ func TestHellPot(t *testing.T) {
 	if !strings.Contains(string(logDat), resolvedConf) {
 		t.Errorf("expected log to contain '%s'", resolvedConf)
 	}
-	if !strings.Contains(string(logDat), "PID: "+strconv.Itoa(os.Getpid())) {
+	if !strings.Contains(string(logDat), strconv.Itoa(os.Getpid())+",") {
 		t.Errorf("expected log to contain 'PID: %d', got %s", os.Getpid(), logDat)
 	}
 	t.Log("resolvedConf: ", resolvedConf)

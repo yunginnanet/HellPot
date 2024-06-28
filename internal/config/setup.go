@@ -30,30 +30,6 @@ func (r *readerProvider) Read() (map[string]interface{}, error) {
 	return toml.Parser().Unmarshal(b) //nolint:wrapcheck
 }
 
-func normalizeMap(m map[string]interface{}) map[string]interface{} {
-	for k, v := range m {
-		ogk := k
-		k = strings.ToLower(k)
-
-		var sslice []string
-		var sliceOK bool
-
-		if sslice, sliceOK = v.([]string); !sliceOK {
-			goto justLower
-		}
-		for i, s := range sslice {
-			sslice[i] = strings.ToLower(s)
-		}
-		slices.Sort(sslice)
-		m[k] = sslice
-	justLower:
-		if k != ogk {
-			delete(m, ogk)
-		}
-	}
-	return m
-}
-
 func (p *Parameters) merge(ogk *koanf.Koanf, newk *koanf.Koanf, friendlyName string) error {
 	if ogk == nil {
 		panic("original koanf is nil")
@@ -63,13 +39,18 @@ func (p *Parameters) merge(ogk *koanf.Koanf, newk *koanf.Koanf, friendlyName str
 	}
 	dirty := false
 
-	newKeys := normalizeMap(newk.All())
+	newKeys := newk.All()
+	ogKeys := ogk.All()
 
 	if len(newk.All()) == 0 || len(newKeys) == 0 {
+		// println("no configuration overrides found in " + friendlyName)
 		return nil
 	}
 
 	valIsEmpty := func(v any) bool {
+		if v == nil {
+			return true
+		}
 		switch v.(type) {
 		case string:
 			return v.(string) == ""
@@ -80,11 +61,22 @@ func (p *Parameters) merge(ogk *koanf.Koanf, newk *koanf.Koanf, friendlyName str
 		}
 	}
 
-	for k, v := range newKeys {
-		ogv := ogk.Get(k)
-		if ogk.Exists(k) && valIsEmpty(ogv) && !valIsEmpty(v) {
-			println("setting newer value for key " + k + " to " + fmt.Sprintf("%v", v) + " from " + friendlyName)
-			if err := ogk.Set(k, v); err != nil {
+	for k, v := range ogKeys {
+		// println("checking key " + k + " for overrides from " + friendlyName)
+		if strings.HasPrefix(k, "logger") && !valIsEmpty(newKeys[k]) {
+			lg := p.Logger
+			lgptr := &lg
+			// println("setting logger config key " + k + " to " + fmt.Sprintf("%v", newKeys[k]) + " from " + friendlyName)
+			if err := lgptr.Set(k, newKeys[k]); err != nil {
+				panic(fmt.Sprintf("failed to set logger config: %v", err))
+			}
+			p.Logger = *lgptr
+			dirty = true
+			continue
+		}
+		if valIsEmpty(v) && !valIsEmpty(newKeys[k]) {
+			// println("setting newer value for key " + k + " to " + fmt.Sprintf("%v", newKeys[k]) + " from " + friendlyName)
+			if err := ogk.Set(k, newKeys[k]); err != nil {
 				panic(fmt.Sprintf("failed to set key %s: %v", k, err))
 			}
 			dirty = true
@@ -95,19 +87,20 @@ func (p *Parameters) merge(ogk *koanf.Koanf, newk *koanf.Koanf, friendlyName str
 			continue
 		}
 
-		if ogv == Defaults.val[k] && v != ogv {
+		if v == Defaults.val[k] && newKeys[k] != Defaults.val[k] {
 			if err := ogk.Set(k, v); err != nil {
 				panic(fmt.Sprintf("failed to set key %s: %v", k, err))
 			}
 			dirty = true
 		}
+
 	}
 
 	if !dirty {
 		return nil
 	}
 
-	println("found configuration overrides in " + friendlyName)
+	// println("found configuration overrides in " + friendlyName)
 
 	if err := ogk.Merge(newk); err != nil {
 		return fmt.Errorf("failed to merge env config: %w", err)
@@ -151,7 +144,7 @@ func parseCLISlice(key string, value string) (string, interface{}) {
 func (p *Parameters) LoadFlags(k *koanf.Koanf) error {
 	flagsK := koanf.New(".")
 
-	if err := flagsK.Load(flags.ProviderWithValue(CLIFlags, ".", parseCLISlice), nil); err != nil {
+	if err := flagsK.Load(flags.ProviderWithValue(CLIFlags, "-", parseCLISlice, k), nil); err != nil {
 		return fmt.Errorf("failed to load flags: %w", err)
 	}
 
@@ -177,17 +170,18 @@ func Setup(source io.Reader) (*Parameters, error) {
 
 	p := &Parameters{
 		source: k,
+		Logger: logger.Configuration{},
 	}
 
 	if source == nil {
 		p.UsingDefaults = true
 	}
 
-	if err := p.LoadFlags(k); err != nil {
+	if err := p.LoadEnv(k); err != nil {
 		return nil, err
 	}
 
-	if err := p.LoadEnv(k); err != nil {
+	if err := p.LoadFlags(k); err != nil {
 		return nil, err
 	}
 
@@ -195,11 +189,9 @@ func Setup(source io.Reader) (*Parameters, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	// for some reason the logger config pointer is not getting populated, do it manually
-	p.Logger = logger.Configuration{}
 	for k, v := range k.All() {
 		if strings.HasPrefix(k, "logger.") {
-			println("setting logger config key " + k + " to " + fmt.Sprintf("%v", v))
+			// println("setting logger config key " + k + " to " + fmt.Sprintf("%v", v))
 			if err := p.Logger.Set(k, v); err != nil {
 				return nil, fmt.Errorf("failed to set logger config: %w", err)
 			}
