@@ -81,6 +81,34 @@ func handleBool(v any) (bool, error) {
 	return vBool, nil
 }
 
+func handleSlice(targetElem reflect.Value, j int, v any) error {
+	switch field := targetElem; field.Type().Elem().Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		vInt, intOK := v.([]int64)
+		if !intOK {
+			return fmt.Errorf("%w: expected int slice, got %T", ErrMismatchingSchema, v)
+		}
+		slice := reflect.MakeSlice(field.Type().Elem(), len(vInt), len(vInt))
+		for i := 0; i < len(vInt); i++ {
+			slice.Index(i).SetInt(vInt[i])
+		}
+		targetElem.Field(j).Set(slice)
+	case reflect.String:
+		vStr, strOK := v.([]string)
+		if !strOK {
+			return fmt.Errorf("%w: expected string slice, got %T", ErrMismatchingSchema, v)
+		}
+		slice := reflect.MakeSlice(field.Type().Elem(), len(vStr), len(vStr))
+		for i := 0; i < len(vStr); i++ {
+			slice.Index(i).SetString(vStr[i])
+		}
+		targetElem.Field(j).Set(slice)
+	default:
+		return fmt.Errorf("%w: unsupported slice type %s", ErrMismatchingSchema, field.Type().Elem().Kind().String())
+	}
+	return nil
+}
+
 func handleBottom(targetElem reflect.Value, v any, j int) error {
 	if !targetElem.CanSet() {
 		return fmt.Errorf("%w: cannot set field", ErrBadTarget)
@@ -102,44 +130,60 @@ func handleBottom(targetElem reflect.Value, v any, j int) error {
 		}
 		targetElem.SetInt(vInt)
 	case reflect.Slice:
-		switch field := targetElem; field.Type().Elem().Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			vInt, intOK := v.([]int64)
-			if !intOK {
-				return fmt.Errorf("%w: expected int slice, got %T", ErrMismatchingSchema, v)
-			}
-			slice := reflect.MakeSlice(field.Type().Elem(), len(vInt), len(vInt))
-			for i := 0; i < len(vInt); i++ {
-				slice.Index(i).SetInt(vInt[i])
-			}
-			targetElem.Field(j).Set(slice)
-		case reflect.String:
-			vStr, strOK := v.([]string)
-			if !strOK {
-				return fmt.Errorf("%w: expected string slice, got %T", ErrMismatchingSchema, v)
-			}
-			slice := reflect.MakeSlice(field.Type().Elem(), len(vStr), len(vStr))
-			for i := 0; i < len(vStr); i++ {
-				slice.Index(i).SetString(vStr[i])
-			}
-			targetElem.Field(j).Set(slice)
+		if sliceErr := handleSlice(targetElem, j, v); sliceErr != nil {
+			return sliceErr
 		}
 	case reflect.Bool:
 		vBool, boolErr := handleBool(v)
 		if boolErr != nil {
-			return fmt.Errorf("%w: %w", ErrMismatchingSchema, boolErr)
+			return boolErr
 		}
 		targetElem.Field(j).SetBool(vBool)
 	}
 	return nil
 }
 
-func (d *decoder) handleLine(lines []string, i int, myTable map[string]interface{}) error {
+func handleArray(valueString string) (value any) {
+	valueString = strings.Trim(valueString, "[]")
+	asplit := strings.Split(valueString, ",")
+	intVals := make([]int64, 0, len(asplit))
+	for aindex := range asplit {
+		asplit[aindex] = strings.Trim(strings.TrimSpace(asplit[aindex]), "\"'")
+		avalInt, intErr := strconv.ParseInt(valueString, 10, 64)
+		if intErr == nil {
+			intVals = append(intVals, avalInt)
+		}
+
+	}
+	if len(intVals) == len(asplit) && len(intVals) > 0 {
+		value = intVals
+	} else {
+		value = asplit
+	}
+	return value
+}
+
+func handleValue(valueString string) (value any) {
+	valueString = strings.Trim(valueString, "\"'")
+	valBool, boolErr := strconv.ParseBool(valueString)
+	valInt, intErr := strconv.ParseInt(valueString, 10, 64)
+	switch {
+	case boolErr == nil:
+		value = valBool
+	case intErr == nil:
+		value = valInt
+	default:
+		value = valueString
+	}
+	return value
+}
+
+func (d *decoder) handleLine(lines []string, i int, myTable map[string]interface{}) (err error, readMore bool) {
 	var key string
 	var value interface{}
-	split := strings.SplitN(lines[i], "=", 2)
+	split := strings.SplitN(lines[i], "=", 2) //nolint:gomnd
 	if len(split) != 2 {
-		return nil
+		return nil, false
 	}
 	key = strings.TrimSpace(split[0])
 	valueString := strings.TrimSpace(split[1])
@@ -147,10 +191,8 @@ func (d *decoder) handleLine(lines []string, i int, myTable map[string]interface
 	if valueString == "[" {
 		d.inArray = true
 		var continued []byte
-		var err error
-		continued, err = d.buf.ReadBytes(']')
-		if err != nil {
-			return fmt.Errorf("%w: %w in mthe middle of array %w", ErrInvalidTOML, io.ErrUnexpectedEOF, err)
+		if continued, err = d.buf.ReadBytes(']'); err != nil {
+			return fmt.Errorf("%w: %w in mthe middle of array %w", ErrInvalidTOML, io.ErrUnexpectedEOF, err), false
 		}
 		valueString += string(continued)
 		valueString = strings.ReplaceAll(valueString, "\n", "")
@@ -158,46 +200,22 @@ func (d *decoder) handleLine(lines []string, i int, myTable map[string]interface
 
 	switch {
 	case d.inArray:
-		valueString = strings.Trim(valueString, "[]")
-		asplit := strings.Split(valueString, ",")
-		intVals := make([]int64, 0, len(asplit))
-		for aindex := range asplit {
-			asplit[aindex] = strings.Trim(strings.TrimSpace(asplit[aindex]), "\"'")
-			avalInt, intErr := strconv.ParseInt(valueString, 10, 64)
-			if intErr == nil {
-				intVals = append(intVals, avalInt)
-			}
-			println("array value: ", asplit[aindex])
-		}
-		if len(intVals) == len(asplit) && len(intVals) > 0 {
-			value = intVals
-		} else {
-			value = asplit
-		}
+		value = handleArray(valueString)
 		d.inArray = false
+		readMore = true
 	default:
-		valueString = strings.Trim(valueString, "\"'")
-		valBool, boolErr := strconv.ParseBool(valueString)
-		valInt, intErr := strconv.ParseInt(valueString, 10, 64)
-		switch {
-		case boolErr == nil:
-			value = valBool
-		case intErr == nil:
-			value = valInt
-		default:
-			value = valueString
-		}
+		value = handleValue(valueString)
 	}
 
 	if value == nil || key == "" || len(valueString) == 0 {
-		return io.EOF
+		return
 	}
 
-	fmt.Printf("key: %s, value(%T): %v\n", key, value, value)
+	fmt.Printf("key: %s, value (%T): %v\n", key, value, value)
 
 	myTable[key] = value
 
-	return nil
+	return
 }
 
 func findStructTag(struc reflect.Value, sought string) (int, error) {
@@ -237,7 +255,7 @@ func (d *decoder) handleTables() error {
 	return nil
 }
 
-func (d *decoder) start() error {
+func (d *decoder) readData() error {
 	d.buf = bufs.Get()
 	defer bufs.MustPut(d.buf)
 
@@ -257,13 +275,13 @@ func (d *decoder) start() error {
 			return tableNameErr
 		}
 
-		println("table: ", string(tableName))
-
 		myTable, mapAssertOK := d.tables[string(tableName)].(map[string]interface{})
 		if !mapAssertOK {
 			d.tables[string(tableName)] = make(map[string]interface{})
 			myTable = d.tables[string(tableName)].(map[string]interface{}) //nolint:forcetypeassert
 		}
+
+	readTable:
 
 		var tableData []byte
 		if tableData, err = d.buf.ReadBytes('['); err != nil && !errors.Is(err, io.EOF) {
@@ -278,18 +296,30 @@ func (d *decoder) start() error {
 			_ = d.buf.UnreadByte()
 		}
 
+		var readMore bool
+
 		for i := 0; i < len(lines); i++ {
-			if err = d.handleLine(lines, i, myTable); err != nil {
+			if err, readMore = d.handleLine(lines, i, myTable); err != nil {
 				if errors.Is(err, io.EOF) {
 					break
 				}
 				return err
+			}
+			if readMore {
+				goto readTable
 			}
 		}
 
 		if len(d.tables) == 0 {
 			return fmt.Errorf("%w: empty TOML, %w", ErrInvalidTOML, io.ErrUnexpectedEOF)
 		}
+	}
+	return nil
+}
+
+func (d *decoder) start() error {
+	if err := d.readData(); err != nil {
+		return err
 	}
 	return d.handleTables()
 }

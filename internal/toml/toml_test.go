@@ -44,7 +44,7 @@ type TestYeetersonParameters struct {
 	McGee      TestMcGeeParameters `toml:"mcgeet"`
 	unexported string              `toml:"unexported"` //golint:unused
 }
-type parameters struct {
+type TestParameters struct {
 	Yeeterson TestYeetersonParameters `toml:"yeet"`
 	McGee     TestMcGeeParameters     `toml:"mcgee"`
 	SkipMe    string                  `toml:"-"`
@@ -62,7 +62,7 @@ var simpleYeeterson = TestYeetersonParameters{
 var (
 	test1 = test{
 		Name: "simple",
-		Unmarshaled: parameters{
+		Unmarshaled: TestParameters{
 			Yeeterson: simpleYeeterson,
 			McGee: TestMcGeeParameters{
 				Username: "mcgee",
@@ -80,7 +80,7 @@ username = "mcgee"`),
 
 	test2 = test{
 		Name: "with empty string, negative number, spaced strings, punctuation",
-		Unmarshaled: parameters{
+		Unmarshaled: TestParameters{
 			Yeeterson: TestYeetersonParameters{
 				ServerName: "",
 				DenyList:   []string{"yeet it."},
@@ -115,7 +115,7 @@ username = "the yeet guy"`),
 
 	test3 = test{
 		Name: "with sub-structs",
-		Unmarshaled: parameters{
+		Unmarshaled: TestParameters{
 			Yeeterson: yeetersonWithChild,
 			McGee: TestMcGeeParameters{
 				Username: "mcgee",
@@ -136,7 +136,7 @@ username = "mcgee"`),
 
 	test4 = test{
 		Name: "with empty structs",
-		Unmarshaled: parameters{
+		Unmarshaled: TestParameters{
 			Yeeterson: TestYeetersonParameters{},
 			McGee: TestMcGeeParameters{
 				Username: "mcgeets",
@@ -149,7 +149,7 @@ username = "mcgeets"`),
 
 	test5 = test{
 		Name: "with pointer struct",
-		Unmarshaled: parameters{
+		Unmarshaled: TestParameters{
 			Yeeterson: TestYeetersonParameters{},
 			McGee: TestMcGeeParameters{
 				Username: "geetsies",
@@ -189,7 +189,7 @@ func TestMarshalTOML(t *testing.T) {
 func TestUnmarshalTOML(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			output := new(parameters)
+			output := new(TestParameters)
 			err := UnmarshalTOML(tt.Marshaled, output)
 			if !errors.Is(err, tt.wantError) {
 				errWantString := "nil"

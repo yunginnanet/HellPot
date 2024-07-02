@@ -80,7 +80,7 @@ func handlePanic(err error) error {
 		panic(r)
 	}
 	ve := &reflect.ValueError{}
-	if !errors.As(r.(error), &ve) { //golint:forcetypeassert
+	if !errors.As(r.(error), &ve) { //nolint:forcetypeassert
 		panic(r)
 	}
 	if err == nil {
