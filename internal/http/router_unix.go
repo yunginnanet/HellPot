@@ -8,18 +8,16 @@ import (
 	"syscall"
 
 	"github.com/fasthttp/router"
-	"github.com/valyala/fasthttp"
-
-	"github.com/yunginnanet/HellPot/internal/config"
 )
 
-func listenOnUnixSocket(addr string, r *router.Router) error {
+func listenOnUnixSocket(addr string, r *router.Router) (net.Listener, error) {
+	config := runningConfig.HTTP.UnixSocket
 	var err error
 	var unixAddr *net.UnixAddr
 	var unixListener *net.UnixListener
 	unixAddr, err = net.ResolveUnixAddr("unix", addr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// Always unlink sockets before listening on them
 	_ = syscall.Unlink(addr)
@@ -29,14 +27,14 @@ func listenOnUnixSocket(addr string, r *router.Router) error {
 	unixListener, err = net.ListenUnix("unix", unixAddr)
 	syscall.Umask(oldmask)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if err = os.Chmod(
 		unixAddr.Name,
 		os.FileMode(config.UnixSocketPermissions),
 	); err != nil {
-		return err
+		return nil, err
 	}
 
-	return fasthttp.Serve(unixListener, r.Handler)
+	return unixListener, nil
 }

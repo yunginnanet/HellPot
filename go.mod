@@ -6,18 +6,15 @@ require (
 	git.tcp.direct/kayos/common v0.9.7
 	github.com/fasthttp/router v1.5.1
 	github.com/knadh/koanf/parsers/toml v0.1.0
+	github.com/knadh/koanf/providers/basicflag v1.0.0
 	github.com/knadh/koanf/providers/env v0.1.0
-	github.com/knadh/koanf/providers/file v1.0.0
 	github.com/knadh/koanf/v2 v2.1.1
 	github.com/rs/zerolog v1.33.0
-	github.com/spf13/afero v1.11.0
 	github.com/valyala/fasthttp v1.55.0
-	golang.org/x/term v0.21.0
 )
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
@@ -29,5 +26,5 @@ require (
 	github.com/savsgio/gotils v0.0.0-20240303185622-093b76447511 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	nullprogram.com/x/rng v1.1.0 // indirect
 )
