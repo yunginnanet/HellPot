@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	git.tcp.direct/kayos/common v0.9.7
+	github.com/davecgh/go-spew v1.1.1
 	github.com/fasthttp/router v1.5.1
 	github.com/knadh/koanf/parsers/toml v0.1.0
 	github.com/knadh/koanf/providers/basicflag v1.0.0
@@ -11,6 +12,7 @@ require (
 	github.com/knadh/koanf/v2 v2.1.1
 	github.com/rs/zerolog v1.33.0
 	github.com/valyala/fasthttp v1.55.0
+	golang.org/x/text v0.16.0
 )
 
 require (

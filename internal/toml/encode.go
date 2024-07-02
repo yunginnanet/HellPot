@@ -23,7 +23,7 @@ type subStruct struct {
 	parent *subStruct
 }
 
-func (sub *subStruct) writeKey(buf *pool.Buffer) {
+func (sub *subStruct) writeTableHeader(buf *pool.Buffer) {
 	parent := sub.parent
 	var parents = make([]string, 0)
 	for parent != nil {
@@ -33,28 +33,22 @@ func (sub *subStruct) writeKey(buf *pool.Buffer) {
 	slices.Reverse(parents)
 	parents = append(parents, sub.name)
 	if len(parents) > 1 {
-		writeKey(buf, parents[0], parents[1:]...)
+		writeTableHeaders(buf, parents[0], parents[1:]...)
 	}
 	if len(parents) == 1 {
-		writeKey(buf, parents[0], parents[1:]...)
+		writeTableHeaders(buf, parents[0], parents[1:]...)
 	}
 }
 
-func mustValidateKey(key string) {
-	for _, b := range key {
+func mustValidateTableName(tableName string) {
+	for _, b := range tableName {
 		if !unicode.IsLetter(b) && b != '.' && b != '_' {
-			panic("key must contain only letters, bad character: " + string(b))
+			panic("table name must contain only letters, bad character: " + string(b))
 		}
 	}
 }
 
 func shouldSkip(field reflect.StructField) (skip bool) {
-	defer func() {
-		if skip {
-			print("should skip: " + field.Name + " (tag: " + field.Tag.Get("toml") + ")? ")
-			println(strconv.FormatBool(skip))
-		}
-	}()
 	if !field.IsExported() || field.Tag.Get("toml") == "-" {
 		skip = true
 		return
@@ -62,13 +56,13 @@ func shouldSkip(field reflect.StructField) (skip bool) {
 	return
 }
 
-func writeKey(buf *pool.Buffer, key string, subkeys ...string) {
-	mustValidateKey(key)
+func writeTableHeaders(buf *pool.Buffer, tableName string, subTableNames ...string) {
+	mustValidateTableName(tableName)
 	_, _ = buf.WriteString("[")
-	_, _ = buf.WriteString(key)
-	if len(subkeys) > 0 {
-		for _, sub := range subkeys {
-			mustValidateKey(sub)
+	_, _ = buf.WriteString(tableName)
+	if len(subTableNames) > 0 {
+		for _, sub := range subTableNames {
+			mustValidateTableName(sub)
 			_, _ = buf.WriteString(".")
 			_, _ = buf.WriteString(sub)
 		}
@@ -86,7 +80,7 @@ func handlePanic(err error) error {
 		panic(r)
 	}
 	ve := &reflect.ValueError{}
-	if !errors.As(r.(error), &ve) {
+	if !errors.As(r.(error), &ve) { //golint:forcetypeassert
 		panic(r)
 	}
 	if err == nil {
@@ -123,6 +117,7 @@ func handleBottomLevelField(field reflect.StructField, ref reflect.Value, buf *p
 	}
 	_, _ = buf.WriteString(field.Tag.Get("toml"))
 	_, _ = buf.WriteString(" = ")
+	//goland:noinspection GoSwitchMissingCasesForIotaConsts
 	switch ref.Kind() {
 	case reflect.String:
 		if err := handleString(ref.String(), buf); err != nil {
@@ -135,7 +130,8 @@ func handleBottomLevelField(field reflect.StructField, ref reflect.Value, buf *p
 	case reflect.Bool:
 		_, _ = buf.WriteString(strconv.FormatBool(ref.Bool()))
 	case reflect.Slice:
-		switch ref.Type().Elem().Kind() {
+		//goland:noinspection GoSwitchMissingCasesForIotaConsts
+		switch ref.Type().Elem().Kind() { //nolint:exhaustive
 		case reflect.String:
 			if ref.Len() == 0 {
 				return nil
@@ -150,6 +146,18 @@ func handleBottomLevelField(field reflect.StructField, ref reflect.Value, buf *p
 				}
 			}
 			_, _ = buf.WriteString("]")
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			if ref.Len() == 0 {
+				return nil
+			}
+			_, _ = buf.WriteString("[")
+			for i := 0; i < ref.Len(); i++ {
+				_, _ = buf.WriteString(strconv.FormatInt(ref.Index(i).Int(), 10))
+				if i < ref.Len()-1 {
+					_, _ = buf.WriteString(", ")
+				}
+			}
+			_, _ = buf.WriteString("]")
 		}
 	}
 
@@ -159,14 +167,6 @@ func handleBottomLevelField(field reflect.StructField, ref reflect.Value, buf *p
 }
 
 func allChildrenEmpty(sub reflect.Value) (empty bool, err error) {
-	/*	var additionalMsg string
-		defer func() {
-			debugMsg := "allChildrenEmpty in '" + sub.Type().Name() + "'? " + strconv.FormatBool(empty)
-			if additionalMsg != "" {
-				debugMsg += ": " + additionalMsg
-			}
-			println(debugMsg)
-		}()*/
 	if sub.Kind() != reflect.Struct {
 		return false, errors.New("input to allChildrenEmpty must be a struct")
 	}
@@ -194,24 +194,22 @@ func (sub *subStruct) handleSubStructField(field reflect.StructField, ref reflec
 		return nil
 	}
 	if field.Type.Kind() == reflect.Ptr {
-		println("pointer: " + field.Name)
 		ref = ref.Elem()
 		if !ref.IsValid() {
-			println("invalid pointer: " + field.Name)
 			return nil
 		}
 	}
 
 	ft := ref.Type()
 
-	switch ft.Kind() {
+	switch ft.Kind() { //nolint:exhaustive
 	case reflect.Struct:
 		child := &subStruct{name: field.Tag.Get("toml"), ref: ref, parent: sub}
 		if empty, err := allChildrenEmpty(ref); empty || err != nil {
 			return err
 		}
 		_, _ = buf.WriteString("\n")
-		child.writeKey(buf)
+		child.writeTableHeader(buf)
 		for i := 0; i < ft.NumField(); i++ {
 			if err := child.handleSubStructField(ft.Field(i), ref.Field(i), buf); err != nil {
 				return err
@@ -248,7 +246,7 @@ func handleFieldTopLevel(field reflect.StructField, ref reflect.Value, buf *pool
 	}
 
 	child := &subStruct{name: field.Tag.Get("toml"), parent: nil, ref: ref}
-	child.writeKey(buf)
+	child.writeTableHeader(buf)
 
 	for i := 0; i < ref.NumField(); i++ {
 		if err := child.handleSubStructField(ref.Type().Field(i), ref.Field(i), buf); err != nil {
@@ -284,8 +282,4 @@ func MarshalTOML(v interface{}) (data []byte, err error) {
 	}
 
 	return bytes.TrimSpace(buf.Bytes()), nil
-}
-
-func UnmarshalTOML(data []byte, v interface{}) error {
-	return nil
 }

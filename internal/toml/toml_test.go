@@ -2,8 +2,11 @@ package toml
 
 import (
 	"errors"
+	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 var (
@@ -17,57 +20,55 @@ var (
 	testResErrFmt = "\n" + wantedErr + "\n%s\n" + actualErr + "\n%s\n" + divErr + "\n"
 )
 
-type Test struct {
-	Name            string
-	UnmarshalInput  []byte
-	UnmarshalOutput any
-	MarshalInput    any
-	MarshalOutput   []byte
-	wantError       error
+type test struct {
+	Name        string
+	Unmarshaled any
+	Marshaled   []byte
+	wantError   error
 }
 
-type Geets struct {
-	Geeters string `toml:"geeters"`
+type TestGeets struct {
+	Geeters   string `toml:"geeters"`
+	YeetIndex []int  `toml:"yeet_index"`
 }
-type McGeeParameters struct {
-	Username string `toml:"username"`
-	SkipTag  string `toml:"-"`
-	SubGeet  *Geets `toml:"sub_geet"`
+type TestMcGeeParameters struct {
+	Username string     `toml:"username"`
+	SkipTag  string     `toml:"-"`
+	SubGeet  *TestGeets `toml:"sub_geet"`
 }
-type YeetersonParameters struct {
-	ServerName string          `toml:"server_name"`
-	DenyList   []string        `toml:"deny_list"`
-	PortNumber int             `toml:"port_number"`
-	YeetMode   bool            `toml:"yeet_mode"`
-	McGee      McGeeParameters `toml:"mcgeet"`
-	unexported string          `toml:"unexported"` //golint:unused
+type TestYeetersonParameters struct {
+	ServerName string              `toml:"server_name"`
+	DenyList   []string            `toml:"deny_list"`
+	PortNumber int                 `toml:"port_number"`
+	YeetMode   bool                `toml:"yeet_mode"`
+	McGee      TestMcGeeParameters `toml:"mcgeet"`
+	unexported string              `toml:"unexported"` //golint:unused
 }
-type Parameters struct {
-	Yeeterson YeetersonParameters `toml:"yeet"`
-	McGee     McGeeParameters     `toml:"mcgee"`
-	SkipMe    string              `toml:"-"`
+type parameters struct {
+	Yeeterson TestYeetersonParameters `toml:"yeet"`
+	McGee     TestMcGeeParameters     `toml:"mcgee"`
+	SkipMe    string                  `toml:"-"`
 
 	skipMe string `toml:"skip_me"` //golint:unused
 }
 
-var simpleYeeterson = YeetersonParameters{
+var simpleYeeterson = TestYeetersonParameters{
 	ServerName: "yeeterson",
 	DenyList:   []string{"yeet", "yeeterson", "yeeterson.com"},
 	PortNumber: 8080,
 	YeetMode:   true,
 }
 
-//nolint:funlen
-func TestMarshalTOML(t *testing.T) {
-	test1 := Test{
+var (
+	test1 = test{
 		Name: "simple",
-		MarshalInput: Parameters{
+		Unmarshaled: parameters{
 			Yeeterson: simpleYeeterson,
-			McGee: McGeeParameters{
+			McGee: TestMcGeeParameters{
 				Username: "mcgee",
 			},
 		},
-		MarshalOutput: []byte(`[yeet]
+		Marshaled: []byte(`[yeet]
 server_name = "yeeterson"
 deny_list = ["yeet", "yeeterson", "yeeterson.com"]
 port_number = 8080
@@ -77,22 +78,22 @@ yeet_mode = true
 username = "mcgee"`),
 	}
 
-	test2 := Test{
-		Name: "with empty string, negative number, spaced strings, and punctuation",
-		MarshalInput: Parameters{
-			Yeeterson: YeetersonParameters{
+	test2 = test{
+		Name: "with empty string, negative number, spaced strings, punctuation",
+		Unmarshaled: parameters{
+			Yeeterson: TestYeetersonParameters{
 				ServerName: "",
 				DenyList:   []string{"yeet it."},
 				PortNumber: -5,
 				YeetMode:   false,
 			},
-			McGee: McGeeParameters{
+			McGee: TestMcGeeParameters{
 				Username: "the yeet guy",
 				SkipTag:  "skip me",
 			},
 			SkipMe: "skip me",
 		},
-		MarshalOutput: []byte(`[yeet]
+		Marshaled: []byte(`[yeet]
 server_name = ""
 deny_list = ["yeet it."]
 port_number = -5
@@ -102,25 +103,25 @@ yeet_mode = false
 username = "the yeet guy"`),
 	}
 
-	yeetersonWithChild := YeetersonParameters{
+	yeetersonWithChild = TestYeetersonParameters{
 		ServerName: simpleYeeterson.ServerName,
 		DenyList:   simpleYeeterson.DenyList,
 		PortNumber: simpleYeeterson.PortNumber,
 		YeetMode:   simpleYeeterson.YeetMode,
-		McGee: McGeeParameters{
+		McGee: TestMcGeeParameters{
 			Username: "Yeeterson McGeeterson",
 		},
 	}
 
-	test3 := Test{
+	test3 = test{
 		Name: "with sub-structs",
-		MarshalInput: Parameters{
+		Unmarshaled: parameters{
 			Yeeterson: yeetersonWithChild,
-			McGee: McGeeParameters{
+			McGee: TestMcGeeParameters{
 				Username: "mcgee",
 			},
 		},
-		MarshalOutput: []byte(`[yeet]
+		Marshaled: []byte(`[yeet]
 server_name = "yeeterson"
 deny_list = ["yeet", "yeeterson", "yeeterson.com"]
 port_number = 8080
@@ -133,49 +134,72 @@ username = "Yeeterson McGeeterson"
 username = "mcgee"`),
 	}
 
-	test4 := Test{
+	test4 = test{
 		Name: "with empty structs",
-		MarshalInput: Parameters{
-			Yeeterson: YeetersonParameters{},
-			McGee: McGeeParameters{
+		Unmarshaled: parameters{
+			Yeeterson: TestYeetersonParameters{},
+			McGee: TestMcGeeParameters{
 				Username: "mcgeets",
-				SubGeet:  &Geets{},
+				SubGeet:  &TestGeets{},
 			},
 		},
-		MarshalOutput: []byte(`[mcgee]
+		Marshaled: []byte(`[mcgee]
 username = "mcgeets"`),
 	}
 
-	test5 := Test{
+	test5 = test{
 		Name: "with pointer struct",
-		MarshalInput: Parameters{
-			Yeeterson: YeetersonParameters{},
-			McGee: McGeeParameters{
+		Unmarshaled: parameters{
+			Yeeterson: TestYeetersonParameters{},
+			McGee: TestMcGeeParameters{
 				Username: "geetsies",
-				SubGeet:  &Geets{Geeters: "geets"},
+				SubGeet:  &TestGeets{Geeters: "geets", YeetIndex: []int{1, 2, 3}},
 			},
 		},
-		MarshalOutput: []byte(`[mcgee]
+		Marshaled: []byte(`[mcgee]
 username = "geetsies"
 
 [mcgee.sub_geet]
-geeters = "geets"`),
+geeters = "geets"
+yeet_index = [1, 2, 3]`),
 	}
 
-	tests := []Test{test1, test2, test3, test4, test5}
+	tests = []test{test1, test2, test3, test4, test5}
+)
 
-	for _, test := range tests {
-		t.Run(test.Name, func(t *testing.T) {
-			output, err := MarshalTOML(test.MarshalInput)
-			if !errors.Is(err, test.wantError) {
+//nolint:funlen
+func TestMarshalTOML(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			output, err := MarshalTOML(tt.Unmarshaled)
+			if !errors.Is(err, tt.wantError) {
 				errWantString := "nil"
-				if test.wantError != nil {
-					errWantString = test.wantError.Error()
+				if tt.wantError != nil {
+					errWantString = tt.wantError.Error()
 				}
 				t.Errorf(testResErrFmt, errWantString, err)
 			}
-			if string(output) != string(test.MarshalOutput) {
-				t.Errorf(testResFmt, test.MarshalOutput, output)
+			if string(output) != string(tt.Marshaled) {
+				t.Errorf(testResFmt, tt.Marshaled, output)
+			}
+		})
+	}
+}
+
+func TestUnmarshalTOML(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			output := new(parameters)
+			err := UnmarshalTOML(tt.Marshaled, output)
+			if !errors.Is(err, tt.wantError) {
+				errWantString := "nil"
+				if tt.wantError != nil {
+					errWantString = tt.wantError.Error()
+				}
+				t.Errorf(testResErrFmt, errWantString, err)
+			}
+			if !reflect.DeepEqual(*output, tt.Unmarshaled) {
+				t.Errorf(testResFmt, tt.Unmarshaled, spew.Sdump(*output))
 			}
 		})
 	}
