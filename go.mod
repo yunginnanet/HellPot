@@ -12,7 +12,7 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/afero v1.11.0
 	github.com/valyala/fasthttp v1.55.0
-	golang.org/x/term v0.21.0
+	golang.org/x/term v0.22.0
 )
 
 require (
@@ -28,6 +28,6 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/savsgio/gotils v0.0.0-20240704082632-aef3928b8a38 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/sys v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 )
