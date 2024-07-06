@@ -61,7 +61,7 @@ func gen(path string) {
 		println(err.Error())
 		os.Exit(1)
 	}
-	if err = os.WriteFile(path, dat, 0o640); err != nil {
+	if err = os.WriteFile(path, dat, 0o600); err != nil {
 		println(err.Error())
 		os.Exit(1)
 	}
