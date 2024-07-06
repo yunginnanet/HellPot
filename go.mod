@@ -1,6 +1,8 @@
 module github.com/yunginnanet/HellPot
 
-go 1.19
+go 1.21
+
+toolchain go1.22.4
 
 require (
 	git.tcp.direct/kayos/common v0.9.9
@@ -10,7 +12,6 @@ require (
 	github.com/knadh/koanf/providers/file v1.0.0
 	github.com/knadh/koanf/v2 v2.1.1
 	github.com/rs/zerolog v1.33.0
-	github.com/spf13/afero v1.11.0
 	github.com/valyala/fasthttp v1.55.0
 	golang.org/x/term v0.22.0
 )
@@ -29,5 +30,4 @@ require (
 	github.com/savsgio/gotils v0.0.0-20240704082632-aef3928b8a38 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
 )

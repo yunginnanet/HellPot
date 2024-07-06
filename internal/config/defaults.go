@@ -1,13 +1,12 @@
 package config
 
 import (
-	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"time"
 
 	"github.com/knadh/koanf/parsers/toml"
-	"github.com/spf13/afero"
 )
 
 var (
@@ -53,34 +52,30 @@ var defOpts = map[string]map[string]interface{}{
 	},
 }
 
-func gen(memfs afero.Fs) {
+func gen(path string) {
 	var (
 		dat []byte
 		err error
-		f   afero.File
 	)
 	if dat, err = snek.Marshal(toml.Parser()); err != nil {
 		println(err.Error())
 		os.Exit(1)
 	}
-	if f, err = memfs.Create("config.toml"); err != nil {
+	if err = os.WriteFile(path, dat, 0o640); err != nil {
 		println(err.Error())
 		os.Exit(1)
 	}
-	var n int
-	if n, err = f.Write(dat); err != nil || n != len(dat) {
-		if err == nil {
-			err = io.ErrShortWrite
-		}
-		println(err.Error())
-		os.Exit(1)
+
+	pathAbs, absErr := filepath.Abs(path)
+	if absErr == nil && pathAbs != "" {
+		path = pathAbs
 	}
-	println("Default config written to config.toml")
+
+	println("Default config written to " + path)
 	os.Exit(0)
 }
 
 func setDefaults() {
-	memfs := afero.NewMemMapFs()
 	//goland:noinspection GoBoolExpressions
 	if runtime.GOOS == "windows" {
 		defNoColor = true
@@ -105,6 +100,6 @@ func setDefaults() {
 	}
 
 	if GenConfig {
-		gen(memfs)
+		gen("./config.toml")
 	}
 }
