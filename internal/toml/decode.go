@@ -153,13 +153,14 @@ func handleArray(valueString string) (value any) {
 		if intErr == nil {
 			intVals = append(intVals, avalInt)
 		}
-
 	}
+
 	if len(intVals) == len(asplit) && len(intVals) > 0 {
 		value = intVals
 	} else {
 		value = asplit
 	}
+
 	return value
 }
 
@@ -276,6 +277,7 @@ func (d *decoder) readData() error {
 		}
 
 		myTable, mapAssertOK := d.tables[string(tableName)].(map[string]interface{})
+
 		if !mapAssertOK {
 			d.tables[string(tableName)] = make(map[string]interface{})
 			myTable = d.tables[string(tableName)].(map[string]interface{}) //nolint:forcetypeassert
@@ -334,7 +336,7 @@ func trimTest(data []byte) (trimmed []byte) {
 func UnmarshalTOML(data []byte, v interface{}) error {
 	var err error
 	if data, err = unicode.UTF8.NewDecoder().Bytes(data); err != nil {
-		return err
+		return fmt.Errorf("unicode decode failure: %w", err)
 	}
 
 	if !bytes.Contains(data, []byte("[")) {
@@ -360,6 +362,7 @@ func UnmarshalTOML(data []byte, v interface{}) error {
 	if ref.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("%w: non-struct", ErrBadTarget)
 	}
+
 	data = bytes.ReplaceAll(data, []byte("\r"), []byte(""))
 
 	return newDecoder(data, v).start()

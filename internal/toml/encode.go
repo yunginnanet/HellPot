@@ -118,7 +118,7 @@ func handleBottomLevelField(field reflect.StructField, ref reflect.Value, buf *p
 	_, _ = buf.WriteString(field.Tag.Get("toml"))
 	_, _ = buf.WriteString(" = ")
 	//goland:noinspection GoSwitchMissingCasesForIotaConsts
-	switch ref.Kind() {
+	switch ref.Kind() { //nolint:exhaustive
 	case reflect.String:
 		if err := handleString(ref.String(), buf); err != nil {
 			return err
