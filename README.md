@@ -41,7 +41,7 @@ In the event of a missing configuration file, HellPot will attempt to place it's
 
 1 ) Download a [compiled release](https://github.com/yunginnanet/HellPot/releases/latest)
 
-2 ) Run binary and immedidately begin sending clients directly to hell.
+2 ) Run binary and immediately begin sending clients directly to hell.
 
 ---
 
