@@ -33,6 +33,7 @@ type TestGeets struct {
 }
 type TestMcGeeParameters struct {
 	Username string     `toml:"username"`
+	IntyBois []int      `toml:"inty_bois"`
 	SkipTag  string     `toml:"-"`
 	SubGeet  *TestGeets `toml:"sub_geet"`
 }
@@ -42,7 +43,8 @@ type TestYeetersonParameters struct {
 	PortNumber int                 `toml:"port_number"`
 	YeetMode   bool                `toml:"yeet_mode"`
 	McGee      TestMcGeeParameters `toml:"mcgeet"`
-	unexported string              `toml:"unexported"` //golint:unused
+
+	unexported string `toml:"unexported"` //golint:unused
 }
 type TestParameters struct {
 	Yeeterson TestYeetersonParameters `toml:"yeet"`
@@ -94,7 +96,6 @@ username = "mcgee"`),
 			SkipMe: "skip me",
 		},
 		Marshaled: []byte(`[yeet]
-server_name = ""
 deny_list = ["yeet it."]
 port_number = -5
 yeet_mode = false
@@ -164,7 +165,21 @@ geeters = "geets"
 yeet_index = [1, 2, 3]`),
 	}
 
-	tests = []test{test1, test2, test3, test4, test5}
+	test6 = test{
+		Name: "with int slice",
+		Unmarshaled: TestParameters{
+			Yeeterson: TestYeetersonParameters{},
+			McGee: TestMcGeeParameters{
+				Username: "geetsies",
+				IntyBois: []int{5, 5, 5, 5, 5},
+			},
+		},
+		Marshaled: []byte(`[mcgee]
+username = "geetsies"
+inty_bois = [5, 5, 5, 5, 5]`),
+	}
+
+	tests = []test{test1, test2, test3, test4, test5, test6}
 )
 
 //nolint:funlen

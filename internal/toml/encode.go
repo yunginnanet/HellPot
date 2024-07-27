@@ -108,11 +108,25 @@ func handleString(s string, buf *pool.Buffer) error {
 	return nil
 }
 
+func isEmpty(ref reflect.Value) bool {
+	switch ref.Type().Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice:
+		return ref.Len() == 0
+	case reflect.String:
+		return ref.Len() == 0 || ref.String() == ""
+	default:
+		return false
+	}
+}
+
 func handleBottomLevelField(field reflect.StructField, ref reflect.Value, buf *pool.Buffer) error {
 	if field.Tag.Get("toml") == "" {
 		return fmt.Errorf("%w: bottom level field", ErrMissingTag)
 	}
 	if shouldSkip(field) {
+		return nil
+	}
+	if isEmpty(ref) {
 		return nil
 	}
 	_, _ = buf.WriteString(field.Tag.Get("toml"))
@@ -130,6 +144,9 @@ func handleBottomLevelField(field reflect.StructField, ref reflect.Value, buf *p
 	case reflect.Bool:
 		_, _ = buf.WriteString(strconv.FormatBool(ref.Bool()))
 	case reflect.Slice:
+		if ref.Len() == 0 {
+			return nil
+		}
 		//goland:noinspection GoSwitchMissingCasesForIotaConsts
 		switch ref.Type().Elem().Kind() { //nolint:exhaustive
 		case reflect.String:

@@ -4,6 +4,7 @@ import (
 	"testing"
 )
 
+//nolint:funlen
 func TestDecoder_readData(t *testing.T) {
 	testData := test1.Marshaled
 	d := newDecoder(testData, nil)
