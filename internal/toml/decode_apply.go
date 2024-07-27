@@ -159,7 +159,7 @@ func findStructTag(struc reflect.Value, sought string) (int, error) {
 			return i, nil
 		}
 	}
-	return -1, fmt.Errorf("%w: %s", ErrMismatchingSchema, sought)
+	return -1, fmt.Errorf("%w: missing struct tag for '%s'", ErrMismatchingSchema, sought)
 
 }
 
@@ -190,23 +190,45 @@ func isIntIsh(a any) (int64, bool) {
 	return aii, true
 }
 
-func (d *decoder) applySlice(targetElem reflect.Value, field reflect.StructField, i int, tk string, tv any) error {
-	switch field.Type.Elem().Kind() {
+func (d *decoder) applySlice(targetElem reflect.Value, field reflect.StructField, tk string, tv any) error {
+	switch field.Type.Elem().Kind() { //nolint:exhaustive
 	case reflect.String:
-		var strok bool
-		var strSlice []string
-		if strSlice, strok = tv.([]string); !strok {
+		if _, strOK := tv.([]string); !strOK {
 			return fmt.Errorf("expected []string for %s, got %T", tk, tv)
 		}
-		targetElem.Field(i).Grow(len(strSlice))
-		for si, sii := range strSlice {
-			fmt.Printf("[key: %s]: setting %s at index %d\n", tk, sii, si)
-			targetElem.Field(i).Index(si).SetString(sii)
-		}
-		return nil
 	case reflect.Int:
-		// var
+		if _, intOK := tv.([]int); !intOK {
+			return fmt.Errorf("expected []int for %s, got %T", tk, tv)
+		}
+	case reflect.Int64:
+		if _, intOK := tv.([]int64); !intOK {
+			return fmt.Errorf("expected []int64 for %s, got %T", tk, tv)
+		}
+	case reflect.Int32:
+		if _, intOK := tv.([]int32); !intOK {
+			return fmt.Errorf("expected []int32 for %s, got %T", tk, tv)
+		}
+	case reflect.Uint64:
+		if _, intOK := tv.([]uint64); !intOK {
+			return fmt.Errorf("expected []uint64 for %s, got %T", tk, tv)
+		}
+	case reflect.Float64:
+		if _, floatOK := tv.([]float64); !floatOK {
+			return fmt.Errorf("expected []float64 for %s, got %T", tk, tv)
+		}
+	case reflect.Float32:
+		if _, floatOK := tv.([]float32); !floatOK {
+			return fmt.Errorf("expected []float32 for %s, got %T", tk, tv)
+		}
+	case reflect.Bool:
+		if _, boolOK := tv.([]bool); !boolOK {
+			return fmt.Errorf("expected []bool for %s, got %T", tk, tv)
+		}
+	default:
+		return fmt.Errorf("unsupported type %v for %s", field.Type.Elem().Kind(), tk)
 	}
+
+	targetElem.Set(reflect.ValueOf(tv))
 
 	return nil
 }
@@ -244,7 +266,7 @@ func (d *decoder) applyValue(targetElem reflect.Value, tk string, tv any) error 
 			}
 			targetElem.Field(i).SetBool(b)
 		case reflect.Slice:
-			if err := d.applySlice(targetElem.Field(i), field, i, tk, tv); err != nil {
+			if err := d.applySlice(targetElem.Field(i), field, tk, tv); err != nil {
 				return err
 			}
 		default:
@@ -254,23 +276,73 @@ func (d *decoder) applyValue(targetElem reflect.Value, tk string, tv any) error 
 
 	return nil
 }
+
+func (d *decoder) handleSubTableKey(targetElem reflect.Value, k string) (*reflect.Value, string, error) {
+	if len(strings.Split(k, ".")) < 2 {
+		return nil, "", fmt.Errorf("%w: expected at least two parts in key %s", ErrMismatchingSchema, k)
+	}
+	subStructField, subStructErr := findStructTag(targetElem, strings.Split(k, ".")[0])
+	if subStructErr != nil {
+		return nil, "", subStructErr
+	}
+	targetSubStructElem := reflect.ValueOf(d.target).Elem().Field(subStructField)
+	if targetSubStructElem.Kind() == reflect.Ptr {
+		if targetSubStructElem.IsNil() {
+			return nil, "", fmt.Errorf("sub-struct for '%s' is nil", k)
+		}
+		targetSubStructElem = targetSubStructElem.Elem()
+	}
+	if targetSubStructElem.Kind() != reflect.Struct {
+		return nil, "", fmt.Errorf("%w: expected struct for '%s', got %T", ErrMismatchingSchema, k, targetSubStructElem)
+	}
+	targetElem = targetSubStructElem
+	k = strings.Split(k, ".")[1]
+
+	return &targetElem, k, nil
+}
 func (d *decoder) handleTable(table map[string]interface{}, k string) error {
 	targetElem := reflect.ValueOf(d.target).Elem()
+
+	if strings.Contains(k, ".") {
+		var err error
+		var targetElemPtr *reflect.Value
+		if targetElemPtr, k, err = d.handleSubTableKey(targetElem, k); err != nil {
+			return err
+		}
+		targetElem = *targetElemPtr
+	}
 
 	fieldIndex, fieldErr := findStructTag(targetElem, k)
 	if fieldErr != nil {
 		return fieldErr
 	}
 	println("field index: ", fieldIndex)
-	if targetElem.Field(fieldIndex).Type().Kind() != reflect.Struct {
-		return fmt.Errorf("%w: expected struct, got %T", ErrMismatchingSchema, targetElem.Field(fieldIndex).Type())
+
+	switch targetElem.Type().Field(fieldIndex).Type.Kind() { //nolint:exhaustive
+	case reflect.Ptr:
+		if targetElem.Field(fieldIndex).IsNil() {
+			return fmt.Errorf("%w: expected struct for '%s', got nil ptr", ErrMismatchingSchema, k)
+		}
+		if targetElem.Field(fieldIndex).Elem().Kind() != reflect.Struct {
+			return fmt.Errorf(
+				"%w: expected struct for '%s', got %s",
+				ErrMismatchingSchema, k, targetElem.Field(fieldIndex).Elem().Type().Kind().String(),
+			)
+		}
+		targetElem = targetElem.Field(fieldIndex).Elem()
+	case reflect.Struct:
+		targetElem = targetElem.Field(fieldIndex)
+	default:
+		return fmt.Errorf(
+			"%w: expected struct for '%s', got %s",
+			ErrMismatchingSchema, k, targetElem.Field(fieldIndex).Type().Kind().String(),
+		)
 	}
 
 	for tk, tv := range table {
 		if err := d.applyValue(targetElem, tk, tv); err != nil {
 			return err
 		}
-
 	}
 
 	return nil
