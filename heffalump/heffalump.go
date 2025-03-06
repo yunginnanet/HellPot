@@ -6,16 +6,12 @@ package heffalump
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"sync"
-
-	"github.com/yunginnanet/HellPot/internal/config"
 )
 
-var log = config.GetLogger()
-
-// DefaultHeffalump represents a Heffalump type
-var DefaultHeffalump *Heffalump
+const DefaultBuffSize = 100 * 1 << 10
 
 // Heffalump represents our buffer pool and markov map from Heffalump
 type Heffalump struct {
@@ -36,18 +32,20 @@ func NewHeffalump(mm MarkovMap, buffsize int) *Heffalump {
 	}
 }
 
+// NewDefaultHeffalump instantiates a new default Heffalump from a MarkovMap created using using the default source text.
+func NewDefaultHeffalump() *Heffalump {
+	return NewHeffalump(NewDefaultMarkovMap(), DefaultBuffSize)
+}
+
 // WriteHell writes markov chain heffalump hell to the provided io.Writer
 func (h *Heffalump) WriteHell(bw *bufio.Writer) (int64, error) {
 	var n int64
 	var err error
 
-	defer func() {
-		if r := recover(); r != nil {
-			log.Error().Interface("caller", r).Msg("panic recovered!")
-		}
-	}()
-
-	buf := h.pool.Get().([]byte)
+	buf, ok := h.pool.Get().([]byte)
+	if !ok {
+		panic("buffer pool type assertion failed, retrieved type is a " + fmt.Sprintf("%T", buf))
+	}
 
 	if _, err = bw.WriteString("<html>\n<body>\n"); err != nil {
 		h.pool.Put(buf)

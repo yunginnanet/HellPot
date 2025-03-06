@@ -5,16 +5,21 @@ import (
 	"io"
 	"math/rand"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
+	"git.tcp.direct/kayos/common/entropy"
 	"git.tcp.direct/kayos/common/squish"
 )
 
-var DefaultMarkovMap MarkovMap
+const (
+	sp = " "
+	nl = "\n"
+)
 
-func init() {
-	// DefaultMarkovMap is a Markov chain based on src.
+// NewDefaultMarkovMap creates a new MarkovMap from the default source text.
+func NewDefaultMarkovMap() MarkovMap {
 	src, err := squish.UnpackStr(srcGz)
 	if err != nil {
 		panic(err)
@@ -22,8 +27,8 @@ func init() {
 	if len(src) < 1 {
 		panic("failed to unpack source")
 	}
-	DefaultMarkovMap = MakeMarkovMap(strings.NewReader(src))
-	DefaultHeffalump = NewHeffalump(DefaultMarkovMap, 100*1<<10)
+
+	return MakeMarkovMap(strings.NewReader(src))
 }
 
 // ScanHTML is a basic split function for a Scanner that returns each
@@ -72,11 +77,15 @@ func ScanHTML(data []byte, atEOF bool) (advance int, token []byte, err error) {
 type tokenPair [2]string
 
 // MarkovMap is a map that acts as a Markov chain generator.
-type MarkovMap map[tokenPair][]string
+type MarkovMap struct {
+	m map[tokenPair][]string
+	r *rand.Rand
+}
 
 // MakeMarkovMap makes an empty MakeMarkov and fills it with r.
 func MakeMarkovMap(r io.Reader) MarkovMap {
-	m := MarkovMap{}
+	m := MarkovMap{m: make(map[tokenPair][]string)}
+	m.r = rand.New(rand.NewSource(entropy.GetOptimizedRand().Int63())) // #nosec: G404 : speed not security
 	m.Fill(r)
 	return m
 }
@@ -99,13 +108,13 @@ func (mm MarkovMap) Fill(r io.Reader) {
 // Add adds a three token sequence to the map.
 func (mm MarkovMap) Add(w1, w2, w3 string) {
 	p := tokenPair{w1, w2}
-	mm[p] = append(mm[p], w3)
+	mm.m[p] = append(mm.m[p], w3)
 }
 
 // Get pseudo-randomly chooses a possible suffix to w1 and w2.
 func (mm MarkovMap) Get(w1, w2 string) string {
 	p := tokenPair{w1, w2}
-	suffix, ok := mm[p]
+	suffix, ok := mm.m[p]
 	if !ok {
 		return ""
 	}
@@ -121,10 +130,15 @@ func (mm MarkovMap) Read(p []byte) (n int, err error) {
 	for {
 		w3 = mm.Get(w1, w2)
 		if n+len(w3)+1 >= len(p) {
+			n += copy(p[n:], nl)
 			break
 		}
 		n += copy(p[n:], w3)
-		n += copy(p[n:], "\n")
+		if time.Now().UnixNano()%10 == 0 {
+			n += copy(p[n:], nl)
+		} else {
+			n += copy(p[n:], sp)
+		}
 		w1, w2 = w2, w3
 	}
 	return
