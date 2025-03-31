@@ -1,6 +1,6 @@
 module github.com/yunginnanet/HellPot
 
-go 1.19
+go 1.23.0
 
 require (
 	git.tcp.direct/kayos/common v0.9.7
