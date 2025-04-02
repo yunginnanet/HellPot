@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -84,6 +85,9 @@ func isIntIsh(a any) (int64, bool) {
 	case int8:
 		aii = int64(ai)
 	case uint:
+		if ai > math.MaxInt64 {
+			panic("uint too large to convert to int64")
+		}
 		aii = int64(ai)
 	case uint8:
 		aii = int64(ai)
@@ -92,6 +96,9 @@ func isIntIsh(a any) (int64, bool) {
 	case uint32:
 		aii = int64(ai)
 	case uint64:
+		if ai > math.MaxInt64 {
+			panic("uint64 too large to convert to int64")
+		}
 		aii = int64(ai)
 	default:
 		return -1, false
@@ -271,7 +278,7 @@ func (d *decoder) handleTable(table map[string]interface{}, k string) error {
 	if fieldErr != nil {
 		return fieldErr
 	}
-	// println("field index: ", fieldIndex)
+	//  println("field index: ", fieldIndex)
 
 	switch targetElem.Type().Field(fieldIndex).Type.Kind() { //nolint:exhaustive
 	case reflect.Ptr:
