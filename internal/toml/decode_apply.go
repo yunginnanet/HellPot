@@ -7,8 +7,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 func (d *decoder) nextTableName() (tableName []byte, err error) {
@@ -26,95 +24,6 @@ func (d *decoder) nextTableName() (tableName []byte, err error) {
 	tableName = tableName[:len(tableName)-1]
 
 	return tableName, nil
-}
-
-func handleBool(v any) (bool, error) {
-	vBool, boolOK := v.(bool)
-	vInt, intOK := v.(int64)
-	vStr, strOK := v.(string)
-	switch {
-	case intOK:
-		if vInt == 0 || vInt == 1 {
-			vBool = vInt == 1
-			boolOK = true
-		}
-	case strOK:
-		parsedBool, parseErr := strconv.ParseBool(vStr)
-		if parseErr != nil {
-			return false, fmt.Errorf("%w: expected bool-ish: %w", ErrMismatchingSchema, parseErr)
-		}
-		vBool = parsedBool
-		boolOK = true
-	case boolOK:
-	default:
-	}
-	if !boolOK {
-		return false, fmt.Errorf("%w: expected bool, got %T", ErrMismatchingSchema, v)
-	}
-
-	return vBool, nil
-}
-
-func handleSlice(targetElem reflect.Value, j int, v any) error {
-	switch field := targetElem; field.Type().Elem().Kind() { //nolint:exhaustive
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		vInt, intOK := v.([]int64)
-		if !intOK {
-			return fmt.Errorf("%w: expected int slice, got %T", ErrMismatchingSchema, v)
-		}
-		slice := reflect.MakeSlice(field.Type().Elem(), len(vInt), len(vInt))
-		for i := 0; i < len(vInt); i++ {
-			slice.Index(i).SetInt(vInt[i])
-		}
-		targetElem.Field(j).Set(slice)
-	case reflect.String:
-		vStr, strOK := v.([]string)
-		if !strOK {
-			return fmt.Errorf("%w: expected string slice, got %T", ErrMismatchingSchema, v)
-		}
-		slice := reflect.MakeSlice(field.Type().Elem(), len(vStr), len(vStr))
-		for i := 0; i < len(vStr); i++ {
-			slice.Index(i).SetString(vStr[i])
-		}
-		targetElem.Field(j).Set(slice)
-	default:
-		return fmt.Errorf("%w: unsupported slice type %s", ErrMismatchingSchema, field.Type().Elem().Kind().String())
-	}
-	return nil
-}
-
-func handleBottom(targetElem reflect.Value, v any, j int) error {
-	if !targetElem.CanSet() {
-		return fmt.Errorf("%w: cannot set field", ErrBadTarget)
-	}
-
-	println(targetElem.Type().Kind().String())
-
-	switch targetElem.Kind() {
-	case reflect.String:
-		vStr, strOK := v.(string)
-		if !strOK {
-			return fmt.Errorf("%w: expected string, got %T", ErrMismatchingSchema, v)
-		}
-		targetElem.SetString(vStr)
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		vInt, intOK := v.(int64)
-		if !intOK {
-			return fmt.Errorf("%w: expected int, got %T", ErrMismatchingSchema, v)
-		}
-		targetElem.SetInt(vInt)
-	case reflect.Slice:
-		if sliceErr := handleSlice(targetElem, j, v); sliceErr != nil {
-			return sliceErr
-		}
-	case reflect.Bool:
-		vBool, boolErr := handleBool(v)
-		if boolErr != nil {
-			return boolErr
-		}
-		targetElem.Field(j).SetBool(vBool)
-	}
-	return nil
 }
 
 func handleArray(valueString string) (value any) {
@@ -190,6 +99,35 @@ func isIntIsh(a any) (int64, bool) {
 	return aii, true
 }
 
+func toInts(tv any) ([]int, bool) {
+	if _, ok := tv.([]int); ok {
+		return tv.([]int), true
+	}
+	if _, ok := tv.([]string); !ok {
+		return nil, false
+	}
+	// convert []string to []int if all elements are int-ish
+	var isIntSlice = true
+	var intSlice []int
+	for _, ss := range tv.([]string) {
+		n, err := strconv.Atoi(strings.TrimSpace(ss))
+		if err != nil {
+			isIntSlice = false
+			break
+		}
+		if intSlice == nil {
+			intSlice = make([]int, 0, len(tv.([]string)))
+		}
+		// println("n: ", n)
+		intSlice = append(intSlice, n)
+	}
+	if !isIntSlice {
+		return nil, false
+	}
+
+	return intSlice, true
+}
+
 func (d *decoder) applySlice(targetElem reflect.Value, field reflect.StructField, tk string, tv any) error {
 	switch field.Type.Elem().Kind() { //nolint:exhaustive
 	case reflect.String:
@@ -197,9 +135,13 @@ func (d *decoder) applySlice(targetElem reflect.Value, field reflect.StructField
 			return fmt.Errorf("expected []string for %s, got %T", tk, tv)
 		}
 	case reflect.Int:
-		if _, intOK := tv.([]int); !intOK {
+		var intSlice []int
+		var intOK bool
+		if intSlice, intOK = toInts(tv); !intOK {
 			return fmt.Errorf("expected []int for %s, got %T", tk, tv)
 		}
+		targetElem.Set(reflect.ValueOf(intSlice))
+		return nil
 	case reflect.Int64:
 		if _, intOK := tv.([]int64); !intOK {
 			return fmt.Errorf("expected []int64 for %s, got %T", tk, tv)
@@ -235,14 +177,27 @@ func (d *decoder) applySlice(targetElem reflect.Value, field reflect.StructField
 
 func (d *decoder) applyValue(targetElem reflect.Value, tk string, tv any) error {
 	for i := 0; i < targetElem.NumField(); i++ {
+
 		field := targetElem.Type().Field(i)
+
+		if field.Type.Kind() == reflect.Ptr {
+			if targetElem.Field(i).IsNil() {
+				targetElem.Field(i).Set(reflect.New(field.Type.Elem()))
+			}
+			if targetElem.Field(i).Elem().Kind() != reflect.Struct {
+				continue
+			}
+			targetElem = targetElem.Field(i).Elem()
+		}
+
 		if !field.IsExported() {
 			continue
 		}
 		if field.Tag.Get("toml") != tk {
 			continue
 		}
-		println("found : ", field.Type.Kind().String(), " in struct for toml tag: ", field.Tag.Get("toml"))
+
+		// println("found : ", field.Type.Kind().String(), " in struct for toml tag: ", field.Tag.Get("toml"))
 		//nolint:exhaustive
 		switch field.Type.Kind() {
 		case reflect.String:
@@ -316,7 +271,7 @@ func (d *decoder) handleTable(table map[string]interface{}, k string) error {
 	if fieldErr != nil {
 		return fieldErr
 	}
-	println("field index: ", fieldIndex)
+	// println("field index: ", fieldIndex)
 
 	switch targetElem.Type().Field(fieldIndex).Type.Kind() { //nolint:exhaustive
 	case reflect.Ptr:
@@ -349,14 +304,14 @@ func (d *decoder) handleTable(table map[string]interface{}, k string) error {
 }
 
 func (d *decoder) handleTables() error {
-	spew.Dump(d.tables)
+	// spew.Dump(d.tables)
 
 	for k, v := range d.tables {
 		vTable, tableOK := v.(map[string]interface{})
 		if !tableOK {
 			return fmt.Errorf("%w: expected table, got %T", ErrMismatchingSchema, v)
 		}
-		println("table:", spew.Sdump(vTable))
+		// println("table:", spew.Sdump(vTable))
 
 		if err := d.handleTable(vTable, k); err != nil {
 			return err

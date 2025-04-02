@@ -10,11 +10,15 @@ import (
 func (d *decoder) handleLine(lines []string, i int, myTable map[string]interface{}) (err error, readMore bool) {
 	var key string
 	var value interface{}
+
+	// TODO: does this account for multiline strings?
 	split := strings.SplitN(lines[i], "=", 2) //nolint:gomnd
 	if len(split) != 2 {
 		return nil, false
 	}
+
 	key = strings.TrimSpace(split[0])
+
 	valueString := strings.TrimSpace(split[1])
 
 	if valueString == "[" {

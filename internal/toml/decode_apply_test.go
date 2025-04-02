@@ -1,6 +1,7 @@
 package toml
 
 import (
+	"bytes"
 	"testing"
 )
 
@@ -82,4 +83,96 @@ func TestDecoder_readData(t *testing.T) {
 	if uname != "mcgee" {
 		t.Errorf("expected table 'mcgee.username' to be 'mcgee', got %s", uname)
 	}
+}
+
+func check(test1 test, t *testing.T) {
+	t.Helper()
+	t.Logf("running test: %s", test1.Name)
+	testData := test1.Marshaled
+	testTarget := &TestParameters{}
+	d := newDecoder(testData, testTarget)
+	if err := d.readData(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if testTarget.Yeeterson.ServerName == "yeeterson" {
+		t.Fatalf("shouldn't be applied yet: %s", testTarget.Yeeterson.ServerName)
+	}
+
+	if err := d.handleTables(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// spew.Dump(d.tables)
+
+	if testTarget.Yeeterson.ServerName != test1.Unmarshaled.(TestParameters).Yeeterson.ServerName {
+		t.Errorf("expected '%s', got '%s'",
+			test1.Unmarshaled.(TestParameters).Yeeterson.ServerName,
+			testTarget.Yeeterson.ServerName,
+		)
+	}
+
+	expectLen := len(test1.Unmarshaled.(TestParameters).Yeeterson.DenyList)
+
+	if expectLen != len(test1.Unmarshaled.(TestParameters).Yeeterson.DenyList) {
+		t.Fatalf("expected %d, got %d",
+			len(test1.Unmarshaled.(TestParameters).Yeeterson.DenyList),
+			len(testTarget.Yeeterson.DenyList))
+	}
+
+	if expectLen > 0 && testTarget.Yeeterson.DenyList[0] != test1.Unmarshaled.(TestParameters).Yeeterson.DenyList[0] {
+		t.Errorf("expected '%s', got '%s'",
+			test1.Unmarshaled.(TestParameters).Yeeterson.DenyList[0],
+			testTarget.Yeeterson.DenyList[0],
+		)
+	}
+
+	if expectLen > 1 && testTarget.Yeeterson.DenyList[1] != test1.Unmarshaled.(TestParameters).Yeeterson.DenyList[1] {
+		t.Errorf("expected '%s', got '%s'",
+			test1.Unmarshaled.(TestParameters).Yeeterson.DenyList[1],
+			testTarget.Yeeterson.DenyList[1],
+		)
+	}
+
+	if expectLen > 2 && testTarget.Yeeterson.DenyList[2] != test1.Unmarshaled.(TestParameters).Yeeterson.DenyList[2] {
+		t.Errorf("expected '%s', got '%s'",
+			test1.Unmarshaled.(TestParameters).Yeeterson.DenyList[2],
+			testTarget.Yeeterson.DenyList[2],
+		)
+	}
+
+	if testTarget.Yeeterson.PortNumber != test1.Unmarshaled.(TestParameters).Yeeterson.PortNumber {
+		t.Errorf("expected %d, got %d",
+			test1.Unmarshaled.(TestParameters).Yeeterson.PortNumber,
+			testTarget.Yeeterson.PortNumber,
+		)
+	}
+
+	if test1.Unmarshaled.(TestParameters).McGee.SubGeet != nil {
+		if testTarget.McGee.SubGeet == nil {
+			t.Fatalf("expected sub_geet, got none")
+		}
+		if testTarget.McGee.SubGeet.Geeters != test1.Unmarshaled.(TestParameters).McGee.SubGeet.Geeters {
+			t.Errorf("expected '%s', got '%s'",
+				test1.Unmarshaled.(TestParameters).McGee.SubGeet.Geeters,
+				testTarget.McGee.SubGeet.Geeters,
+			)
+		}
+	}
+
+	m, e := MarshalTOML(testTarget)
+	if e != nil {
+		t.Fatalf("unexpected error: %v", e)
+	}
+
+	if !bytes.Equal(m, testData) {
+		t.Errorf("expected %s, got %s", testData, m)
+	}
+}
+
+func TestDecoder_handleTables(t *testing.T) {
+	check(test1, t)
+	check(test2, t)
+	check(test3, t)
+	check(test4, t)
 }

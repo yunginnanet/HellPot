@@ -277,10 +277,18 @@ func handleFieldTopLevel(field reflect.StructField, ref reflect.Value, buf *pool
 func MarshalTOML(v interface{}) (data []byte, err error) {
 	defer func() { err = handlePanic(err) }()
 	tof := reflect.TypeOf(v)
+
+	if tof.Kind() == reflect.Pointer {
+		tof = tof.Elem()
+		v = reflect.ValueOf(v).Elem().Interface()
+	}
+
 	if tof.Kind() != reflect.Struct {
 		return nil, errors.New("input must be a struct")
 	}
+
 	elem := reflect.ValueOf(v)
+
 	fieldCount := elem.NumField()
 	if fieldCount < 1 {
 		return nil, errors.New("input struct must have at least one field")

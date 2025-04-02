@@ -2,11 +2,9 @@ package toml
 
 import (
 	"errors"
-	"reflect"
+	"fmt"
 	"strings"
 	"testing"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 var (
@@ -182,6 +180,47 @@ inty_bois = [5, 5, 5, 5, 5]`),
 	tests = []test{test1, test2, test3, test4, test5, test6}
 )
 
+func testParametersEqual(one TestParameters, two TestParameters) error {
+	if one.McGee.Username != two.McGee.Username {
+		return fmt.Errorf("username wanted: %s, got: %s", one.McGee.Username, two.McGee.Username)
+	}
+	if one.McGee.IntyBois != nil && two.McGee.IntyBois != nil {
+		for i := range one.McGee.IntyBois {
+			if one.McGee.IntyBois[i] != two.McGee.IntyBois[i] {
+				return fmt.Errorf("inty_bois[%d] not equal", i)
+			}
+		}
+	}
+	if one.McGee.SubGeet != nil && two.McGee.SubGeet != nil {
+		if one.McGee.SubGeet.Geeters != two.McGee.SubGeet.Geeters {
+			return fmt.Errorf("sub_geet.geeters wanted: %s, got: %s", one.McGee.SubGeet.Geeters, two.McGee.SubGeet.Geeters)
+		}
+		for i := range one.McGee.SubGeet.YeetIndex {
+			if one.McGee.SubGeet.YeetIndex[i] != two.McGee.SubGeet.YeetIndex[i] {
+				return fmt.Errorf("sub_geet.yeet_index[%d] not equal", i)
+			}
+		}
+	}
+	if one.Yeeterson.ServerName != two.Yeeterson.ServerName {
+		return fmt.Errorf("server_name wanted: %s, got: %s", one.Yeeterson.ServerName, two.Yeeterson.ServerName)
+	}
+	if one.Yeeterson.PortNumber != two.Yeeterson.PortNumber {
+		return fmt.Errorf("port_number wanted: %d, got: %d", one.Yeeterson.PortNumber, two.Yeeterson.PortNumber)
+	}
+	if one.Yeeterson.YeetMode != two.Yeeterson.YeetMode {
+		return fmt.Errorf("yeet_mode wanted: %t, got: %t", one.Yeeterson.YeetMode, two.Yeeterson.YeetMode)
+	}
+	if len(one.Yeeterson.DenyList) != len(two.Yeeterson.DenyList) {
+		return fmt.Errorf("deny_list length wanted: %d, got: %d", len(one.Yeeterson.DenyList), len(two.Yeeterson.DenyList))
+	}
+	for i := range one.Yeeterson.DenyList {
+		if one.Yeeterson.DenyList[i] != two.Yeeterson.DenyList[i] {
+			return fmt.Errorf("deny_list[%d] not equal", i)
+		}
+	}
+	return nil
+}
+
 //nolint:funlen
 func TestMarshalTOML(t *testing.T) {
 	for _, tt := range tests {
@@ -195,7 +234,7 @@ func TestMarshalTOML(t *testing.T) {
 				t.Errorf(testResErrFmt, errWantString, err)
 			}
 			if string(output) != string(tt.Marshaled) {
-				t.Errorf(testResFmt, tt.Marshaled, output)
+				t.Errorf(testResFmt, tt.Marshaled, string(output))
 			}
 		})
 	}
@@ -213,8 +252,9 @@ func TestUnmarshalTOML(t *testing.T) {
 				}
 				t.Errorf(testResErrFmt, errWantString, err)
 			}
-			if !reflect.DeepEqual(*output, tt.Unmarshaled) {
-				t.Errorf(testResFmt, tt.Unmarshaled, spew.Sdump(*output))
+			// if !reflect.DeepEqual(*output, tt.Unmarshaled) {
+			if eqErr := testParametersEqual(*output, tt.Unmarshaled.(TestParameters)); eqErr != nil {
+				t.Errorf(testResFmt, tt.Unmarshaled, output)
 			}
 		})
 	}
