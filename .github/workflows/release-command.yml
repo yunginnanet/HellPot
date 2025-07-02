@@ -4,16 +4,6 @@ on:
   release:
     types: [created]
   workflow_dispatch:
-#    inputs:
-#      repository:
-#        description: "The repository from which the slash command was dispatched"
-#        required: true
-#      comment-id:
-#        description: "The comment-id of the slash command"
-#        required: true
-#      tag:
-#        description: "The tag to be released"
-#        required: true
 
 jobs:
   release:
@@ -45,10 +35,8 @@ jobs:
           # release_tag: ${{ github.ref }}
           md5sum: FALSE
           sha256sum: TRUE
-#      - name: Add reaction
-#        uses: peter-evans/create-or-update-comment@v4
-#        with:
-#          token: ${{ secrets.PAT }}
-#          repository: ${{ github.repository }}
-#          comment-id: ${{ github.event.inputs.comment-id }}
-#          reaction-type: hooray
+          overwrite: TRUE
+      - run: |
+          docker login --username yunginnanet --password ${{ secrets.PAT }} ghcr.io
+          docker build . --tag ghcr.io/yunginnanet/hellpot:latest
+          docker push ghcr.io/yunginnanet/hellpot:latest
