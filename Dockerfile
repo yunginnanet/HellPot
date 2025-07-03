@@ -1,4 +1,4 @@
-FROM golang:1.21 as build
+FROM golang:1.23 AS build
 WORKDIR /go/src/app
 
 COPY go.* .
@@ -17,6 +17,7 @@ RUN \
 
 
 FROM gcr.io/distroless/static-debian11
+LABEL org.opencontainers.image.source https://github.com/yunginnanet/HellPot
 
 COPY --from=build /go/src/app/HellPot /app
 COPY --from=build /go/src/app/docker_config.toml /config
