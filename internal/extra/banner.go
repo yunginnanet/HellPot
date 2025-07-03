@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"git.tcp.direct/kayos/common/squish"
+	"github.com/yunginnanet/common/squish"
 
 	"github.com/yunginnanet/HellPot/internal/version"
 )

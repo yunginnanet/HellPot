@@ -9,8 +9,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"git.tcp.direct/kayos/common/entropy"
-	"git.tcp.direct/kayos/common/squish"
+	"github.com/yunginnanet/common/entropy"
+	"github.com/yunginnanet/common/squish"
 )
 
 const (

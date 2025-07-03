@@ -3,7 +3,7 @@ package http
 import (
 	"fmt"
 
-	"git.tcp.direct/kayos/common/pool"
+	"github.com/yunginnanet/common/pool"
 	"github.com/valyala/fasthttp"
 )
 
