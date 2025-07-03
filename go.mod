@@ -5,15 +5,14 @@ go 1.23.0
 toolchain go1.24.1
 
 require (
-	git.tcp.direct/kayos/common v1.0.0
 	github.com/fasthttp/router v1.5.4
 	github.com/knadh/koanf/parsers/toml v0.1.0
+	github.com/knadh/koanf/providers/basicflag v1.1.0
 	github.com/knadh/koanf/providers/env v1.1.0
-	github.com/knadh/koanf/providers/file v1.2.0
 	github.com/knadh/koanf/v2 v2.2.1
 	github.com/rs/zerolog v1.34.0
 	github.com/valyala/fasthttp v1.63.0
-	golang.org/x/term v0.32.0
+	github.com/yunginnanet/common v1.0.1
 )
 
 require (
@@ -30,4 +29,5 @@ require (
 	github.com/savsgio/gotils v0.0.0-20240704082632-aef3928b8a38 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
+	nullprogram.com/x/rng v1.1.0 // indirect
 )

@@ -2,32 +2,35 @@ package http
 
 import (
 	"fmt"
-	"strings"
 
+	"github.com/yunginnanet/common/pool"
 	"github.com/valyala/fasthttp"
-
-	"github.com/yunginnanet/HellPot/internal/config"
 )
 
+var strs = pool.NewStringFactory()
+
 func robotsTXT(ctx *fasthttp.RequestCtx) {
+	config := runningConfig.HTTP.Router
 	slog := log.With().
 		Str("USERAGENT", string(ctx.UserAgent())).
 		Str("REMOTE_ADDR", getRealRemote(ctx)).
 		Interface("URL", string(ctx.RequestURI())).Logger()
-	paths := &strings.Builder{}
-	paths.WriteString("User-agent: *\r\n")
+	pathBuf := strs.Get()
+	pathBuf.MustWriteString("User-agent: *\r\n")
 	for _, p := range config.Paths {
-		paths.WriteString("Disallow: ")
-		paths.WriteString(p)
-		paths.WriteString("\r\n")
+		pathBuf.MustWriteString("Disallow: ")
+		pathBuf.MustWriteString(p)
+		pathBuf.MustWriteString("\r\n")
 	}
-	paths.WriteString("\r\n")
+	pathBuf.MustWriteString("\r\n")
+	paths := pathBuf.String()
+	strs.MustPut(pathBuf)
 
 	slog.Debug().
 		Strs("PATHS", config.Paths).
 		Msg("SERVE_ROBOTS")
 
-	if _, err := fmt.Fprintf(ctx, paths.String()); err != nil {
+	if _, err := fmt.Fprintf(ctx, paths); err != nil {
 		slog.Error().Err(err).Msg("SERVE_ROBOTS_ERROR")
 	}
 }
