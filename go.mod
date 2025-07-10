@@ -10,10 +10,10 @@ require (
 	github.com/knadh/koanf/parsers/toml v0.1.0
 	github.com/knadh/koanf/providers/env v1.1.0
 	github.com/knadh/koanf/providers/file v1.2.0
-	github.com/knadh/koanf/v2 v2.2.1
+	github.com/knadh/koanf/v2 v2.2.2
 	github.com/rs/zerolog v1.34.0
 	github.com/valyala/fasthttp v1.63.0
-	golang.org/x/term v0.32.0
+	golang.org/x/term v0.33.0
 )
 
 require (
@@ -29,5 +29,5 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/savsgio/gotils v0.0.0-20240704082632-aef3928b8a38 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 )
